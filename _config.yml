@@ -12,18 +12,18 @@ url: "https://github.com/LyraZeta/LyraZeta.github.io.git"
 enableToc: true
 
 # Comment
-comment:
-    # livere: MTAyMC81MDk5NC8yNzQ3Ng  # https://www.livere.com
-    disqus: leopard
-    # uyan: 2143225  # 有言id,登录有言官网申请
+# comment:
+#     # livere: MTAyMC81MDk5NC8yNzQ3Ng  # https://www.livere.com
+#     disqus: leopard
+#     # uyan: 2143225  # 有言id,登录有言官网申请
 
 # Social
 social:
-    # weibo: 5366874726 
+    # weibo: xxx
     github: LyraZeta
-    # zhihu: panpanleopard
+    # zhihu: xxx
     # juejin: xxx
-    # jianshu: 2ada30d8d0f7
+    # jianshu: xxxxx
     # twitter: 
     mail: lyrazeta@outlook.com
 
