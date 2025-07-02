@@ -7,6 +7,7 @@ avatarTitle: lyra
 # 头像里面的描述
 avatarDesc: 光学工程 / 开发
 url: "https://github.com/LyraZeta/LyraZeta.github.io.git"
+# url: "https://lyrazeta.space"
 
 # 博客是否自动生成目录，false为不生成
 enableToc: true
