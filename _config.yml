@@ -32,23 +32,21 @@ social:
 # 百度统计 
 # 使用博客模板请去掉或者更换 id 
 baidu:
-    id: ac013b7eabeec996109110f84a08c498
+    id: ac013b7eabeec996109110f84a08c498  # .github.io
+    # id: 641e7528bb28dcdde3c3a195f207cbb7  # .space
 
 # Google Analytics
 # 使用博客模板请去掉或者更换 id
 # ga:
 #     id: UA-84134159-3  
-#     host: auto  
+#     host: auto
+
+# Cloudflare Web Analytics
+cloudflare:
+    token: cca534cddcdd47ae911f8da35c780c04
 
 
-# 《----------------- 上面的信息修改成你自己的 ---------------------------》
-#
-#
-#  _post/ 下的文章更换成你自己的文章
-#  帮忙star一下，感谢~😆 地址： https://github.com/LyraZeta/LyraZeta.github.io.git
-#
-#
-# 《--------------- 下面的信息可以自行选择是否修改 ------------------------》
+# 《--------------- 配置信息 ----------------》
 
 
 permalink: /:year/:month/:title/

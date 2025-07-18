@@ -56,6 +56,12 @@
   </script>
   {% endif %}
 
+<!-- Cloudflare Web Analytics -->
+  {% if site.cloudflare.token %}
+  <script defer src='https://static.cloudflareinsights.com/beacon.min.js' 
+          data-cf-beacon='{"token": "{{site.cloudflare.token}}"}'></script>
+  {% endif %}
+
   <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
 <script>
   (adsbygoogle = window.adsbygoogle || []).push({
