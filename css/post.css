@@ -5,6 +5,109 @@
   /*background:#B9D3EE;*/
   /*text-align: center;*/
   padding-left: 20px;
-  margin-bottom: 20px;
+  margin-top: 5px;
+  margin-bottom: 5px;
   border-left: 3px solid #1874CD; 
+}
+
+.post h3 {
+  font-size: 1.3em;
+  font-weight: bold;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  color: #333;
+}
+
+.post p {
+  margin-bottom: 6px; /* 段落底部间距 */
+  /* text-indent: 0; 不缩进 */
+  line-height: 1.35; /* 中文段落行高 */
+  color: #555;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.post ul, .post ol {
+  margin-bottom: 6px; /* 列表底部间距 */
+  padding-left: 12px; /* 列表缩进 */
+  line-height: 1.35; /* 列表行高 */
+}
+
+.post li {
+  margin-bottom: 0px; /* 列表项底部间距 */
+  line-height: 1.35; /* 列表项行高 */
+  word-wrap: break-word;
+}
+
+.post ul li {
+  list-style-type: disc;
+}
+
+.post ol li {
+  list-style-type: decimal;
+  margin-top: -2px; /* 向上压缩间距 */
+}
+
+.post strong {
+  font-weight: bold;
+  color: #333;
+}
+
+.post em {
+  font-style: italic;
+}
+
+.post blockquote {
+  margin: 20px 0;
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-left: 4px solid #ddd;
+  font-style: italic;
+  word-wrap: break-word;
+}
+
+.post code {
+  background-color: #f4f4f4;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-family: 'Courier New', monospace;
+  word-wrap: break-word;
+}
+
+.post pre {
+  background-color: #f4f4f4;
+  padding: 15px;
+  border-radius: 5px;
+  overflow-x: auto;
+  margin: 20px 0;
+  line-height: 1.4;
+}
+
+.post a {
+  color: #1874CD;
+  text-decoration: none;
+}
+
+.post a:hover {
+  text-decoration: underline;
+}
+
+/* 确保文章内容区域正确换行 */
+.post {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.35; /* 这里是中文段落的行高 */
+  white-space: pre-wrap;
+}
+
+/* 修复中文段落间距 */
+.post > p {
+  margin-bottom: 0.2em;
+  text-indent: 0;
+}
+
+/* 确保列表项正确换行 */
+.post ul li, .post ol li {
+  word-break: break-word;
+  overflow-wrap: break-word;
 }

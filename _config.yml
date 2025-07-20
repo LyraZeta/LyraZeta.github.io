@@ -32,8 +32,8 @@ social:
 # 百度统计 
 # 使用博客模板请去掉或者更换 id 
 baidu:
-    id: ac013b7eabeec996109110f84a08c498  # .github.io
-    # id: 641e7528bb28dcdde3c3a195f207cbb7  # .space
+    # id: ac013b7eabeec996109110f84a08c498  # .github.io
+    id: 641e7528bb28dcdde3c3a195f207cbb7  # .space
 
 # Google Analytics
 # 使用博客模板请去掉或者更换 id
@@ -71,7 +71,7 @@ nav:
     
 
 # Pagination
-gems: [jekyll-paginate,jekyll-sitemap]
+plugins: [jekyll-paginate,jekyll-sitemap]
 paginate: 20
 paginate_path: "page/:num/"
 

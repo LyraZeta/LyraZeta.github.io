@@ -22,6 +22,12 @@ $(document).ready(function() {
     $('.main-post-list').removeClass('hidden');
   }
 
+  // 如果是首页且没有哈希，也显示文章列表
+  if ((window.location.pathname == "/" || window.location.pathname == "/index.html") && !window.location.hash) {
+    $('.panel-cover').addClass('panel-cover--collapsed');
+    $('.main-post-list').removeClass('hidden');
+  }
+
   if (window.location.pathname.substring(0, 5) == "/tag/") {
     $('.panel-cover').addClass('panel-cover--collapsed');
   }
