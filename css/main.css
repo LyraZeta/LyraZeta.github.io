@@ -252,6 +252,9 @@ td:last-child {
 }
 
 /*pager start----------------*/
+.pager {
+  margin-bottom: 80px;  /* 增加底部边距，避免与页脚重叠 */
+}
 .post-container 
 .pager li{ 
   margin-top: 20px;
@@ -553,7 +556,15 @@ img::-moz-selection {
     margin-bottom: .2em; }
 
   .panel-cover__description {
-    margin: 0 30px; }
+    margin: 0 30px;
+    font-family: "ff-tisa-web-pro-1", "ff-tisa-web-pro-2", "Lucida Grande", "Hiragino Sans GB", "Hiragino Sans GB W3", "Microsoft YaHei", "WenQuanYi Micro Hei", serif;
+    font-size: 1.0em; /* 字体大小 */
+    font-weight: 300;
+    font-style: italic; /*斜体字*/
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    letter-spacing: 0.5px; }
 
   .panel-cover__divider {
     width: 50%;
