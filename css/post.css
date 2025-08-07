@@ -10,6 +10,19 @@
   border-left: 3px solid #1874CD; 
 }
 
+/* 文章描述样式：description */
+.post-description {
+  font-size: 1.1em;
+  color: #666;
+  font-style: italic;
+  margin: 15px 0 20px 0;
+  padding: 10px 15px;
+  background-color: #f8f9fa;
+  border-left: 4px solid #007bff;
+  border-radius: 3px;
+}
+
+/* 文章内容样式 */
 .post h3 {
   font-size: 1.3em;
   font-weight: bold;
@@ -39,6 +52,7 @@
   word-wrap: break-word;
 }
 
+/* 列表样式 */
 .post ul li {
   list-style-type: disc;
 }
@@ -57,6 +71,7 @@
   font-style: italic;
 }
 
+/* 引用和代码块样式 */
 .post blockquote {
   margin: 20px 0;
   padding: 15px;
