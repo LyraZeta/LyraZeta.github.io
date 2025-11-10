@@ -25,7 +25,7 @@ H6 :###### Header 6
 加粗 :**Bold**        
 斜体字 :*Italics*         
 *删除线 :~~text~~          
-内嵌代码 : `alert('Hello World');`        
+内嵌代码 : `alert('Hello World');`
 
 ### 列表
 
