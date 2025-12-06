@@ -3,7 +3,7 @@ layout: page
 title: 待开发模块~
 ---
 
-博客源码在 <a target="_blank" href='https://github.com/lyrazeta/lyrazeta.github.io/'>Github</a> 上，求 Star ~
+网站源码在 <a target="_blank" href='https://github.com/lyrazeta/lyrazeta.github.io/'>Github</a> 上，求 Star ~
 
 
 遇到问题可以在[Issues](https://github.com/lyrazeta/lyrazeta.github.io/issues)中提问。
