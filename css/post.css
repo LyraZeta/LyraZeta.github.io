@@ -98,6 +98,26 @@
   line-height: 1.4;
 }
 
+/* 图片样式辅助类 */
+.post img.left {
+  float: left;
+  margin: 0 15px 15px 0;
+}
+
+.post img.right {
+  float: right;
+  margin: 0 0 15px 15px;
+}
+
+.post img.center {
+  display: block;
+  margin: 0 auto;
+}
+
+.post img.w-50 { width: 50%; }
+.post img.w-75 { width: 75%; }
+.post img.w-100 { width: 100%; }
+
 .post a {
   color: #1874CD;
   text-decoration: none;

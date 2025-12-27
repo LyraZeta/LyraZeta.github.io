@@ -756,8 +756,8 @@ img::-moz-selection {
     display: inline-block;
     position: relative;
     width: 100%;
-    border-color: #666;
-    color: #666;
+    border-color: rgba(255, 255, 255, 0.5);
+    color: rgba(255, 255, 255, 0.6);
     /*opacity: .8; */
   }
 
@@ -1454,3 +1454,242 @@ nav a {
   transform: translateY(-3px);
 }
 /*导航按钮-end*/
+
+/* Dark Mode Styles */
+body.dark-mode {
+  background-color: #1e1e1e;
+  color: #d4d4d4;
+}
+
+body.dark-mode h1,
+body.dark-mode h2,
+body.dark-mode h3,
+body.dark-mode h4,
+body.dark-mode h5,
+body.dark-mode h6 {
+  color: #e0e0e0;
+}
+
+body.dark-mode a {
+  color: #4da6ff;
+}
+
+body.dark-mode a:hover {
+  color: #80c1ff;
+}
+
+body.dark-mode blockquote {
+  background-color: #2d2d2d;
+  border-left-color: #666;
+  color: #ccc;
+}
+
+body.dark-mode code {
+  background-color: #2d2d2d;
+  border-color: #404040;
+  color: #d4d4d4;
+}
+
+body.dark-mode pre {
+  background-color: #1e1e1e;
+  border-color: #404040;
+}
+
+body.dark-mode table {
+  border-color: #666;
+  color: #d4d4d4;
+}
+
+body.dark-mode thead tr:first-child {
+  background-color: #333;
+  color: #fff;
+  border-color: #666;
+}
+
+body.dark-mode th,
+body.dark-mode td {
+  border-color: #666;
+}
+
+body.dark-mode h3 {
+  background-color: #2d2d2d;
+  box-shadow: 0px 5px 5px #000;
+  border-left-color: #4da6ff;
+}
+
+/* Post specific overrides */
+body.dark-mode .post-description {
+  background-color: #2d2d2d;
+  border-left-color: #4da6ff;
+  color: #ccc;
+}
+
+body.dark-mode .post h2 {
+    border-left-color: #4da6ff;
+}
+
+body.dark-mode .post blockquote {
+  background-color: #2d2d2d;
+  border-left-color: #666;
+}
+
+body.dark-mode .post code {
+  background-color: #2d2d2d;
+}
+
+body.dark-mode .post pre {
+  background-color: #1e1e1e;
+}
+
+/* Dark Mode Post List Styles */
+body.dark-mode .post-list li {
+  background-color: #252525;
+  box-shadow: none;
+  border: 1px solid #333;
+}
+
+body.dark-mode .post-list li:hover {
+  background-color: #2d2d2d;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+}
+
+body.dark-mode .post-list__post-title a {
+  color: #e0e0e0;
+}
+
+body.dark-mode .post-list__post-title a:hover {
+  color: #4da6ff;
+  background-color: transparent;
+}
+
+body.dark-mode .excerpt {
+  color: #ccc;
+  background-color: transparent;
+}
+
+body.dark-mode .post-list__meta,
+body.dark-mode .post-list__meta--date {
+  color: #aaa;
+}
+
+body.dark-mode .post-list__meta--tags-right {
+  color: #80c1ff;
+}
+
+body.dark-mode .btn-border-small {
+    color: #4da6ff;
+}
+
+body.dark-mode .btn-border-small:hover {
+    color: #80c1ff;
+}
+
+/* Global Text Color Adjustments for Dark Mode */
+body.dark-mode p {
+  color: #d4d4d4;
+}
+
+body.dark-mode li {
+  color: #d4d4d4;
+}
+
+body.dark-mode .panel-cover__description {
+  color: #d4d4d4;
+}
+
+body.dark-mode .navigation__item a {
+  color: #d4d4d4;
+}
+
+body.dark-mode .navigation__item a:hover {
+  color: #fff;
+}
+
+/* Dark Mode Toggle Button */
+.dark-mode-toggle-btn {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  color: #333;
+  font-size: 24px;
+  background: rgba(255, 255, 255, 0.8);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  text-align: center;
+  line-height: 40px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  transition: all 0.3s ease;
+}
+
+.dark-mode-toggle-btn:hover {
+  background: #fff;
+  transform: scale(1.1);
+  color: #000;
+}
+
+body.dark-mode .dark-mode-toggle-btn {
+  color: #d4d4d4;
+  background: rgba(30, 30, 30, 0.8);
+}
+
+body.dark-mode .dark-mode-toggle-btn:hover {
+  background: #333;
+  color: #fff;
+}
+
+/* Footer Styles (Moved from inline) */
+.footer {
+    margin-top: 20px;
+    padding: 20px 0;
+    background-color: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+}
+
+.footer_div {
+    padding: 10px 0;
+}
+
+.beian-info {
+    margin-top: 10px;
+    text-align: center;
+}
+
+.beian-icon {
+    height: 20px;
+    vertical-align: middle;
+    margin-right: 5px;
+}
+
+.beian-text {
+    color: #6c757d;
+    text-decoration: none;
+}
+
+.beian-text:hover {
+    text-decoration: underline;
+}
+
+/* Dark Mode Footer */
+body.dark-mode .footer {
+    background-color: #1e1e1e;
+    border-top-color: #333;
+    color: #aaa;
+}
+
+body.dark-mode .beian-text {
+    color: #aaa;
+}
+
+body.dark-mode .copyright {
+    color: #aaa;
+}
+
+body.dark-mode .copyright a {
+    color: #4da6ff;
+}
+
+body.dark-mode #busuanzi_container_site_pv {
+    color: #aaa;
+}

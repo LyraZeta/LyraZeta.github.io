@@ -4,6 +4,15 @@
   {% include head.html %}
 
   <body>
+    <script>
+      if (localStorage.getItem('dark-mode') !== 'false') {
+        document.body.classList.add('dark-mode');
+      }
+    </script>
+
+    <a href="#" id="dark-mode-toggle" class="dark-mode-toggle-btn" title="切换暗黑模式">
+      <i class="fa fa-moon-o" aria-hidden="true"></i>
+    </a>
 
     <span class="mobile btn-mobile-menu">        
       <div class="nav_container">
@@ -35,6 +44,7 @@
     
     {% include external.html %}
     
+    <script src="{{ "/js/dark-mode.js" | prepend: site.baseurl }}"></script>
   </body>
 
 </html>
