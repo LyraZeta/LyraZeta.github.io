@@ -5,5 +5,8 @@
 
 ### 其他
 
+国内查看：[LyraZeta的个人网站](https://lyrazeta.space)
+github网站：[LyraZeta的个人网站](https://lyrazeta.github.io/)
+
 创作ing……
 
