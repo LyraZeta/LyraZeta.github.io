@@ -51,7 +51,13 @@ cloudflare:
 
 permalink: /:year/:month/:title/
 # Format
+markdown: kramdown
 highlighter: rouge
+kramdown:
+    input: GFM
+    math_engine: mathjax
+    math_engine_opts:
+        preview: false
 
 textColor: #FF0000
 
