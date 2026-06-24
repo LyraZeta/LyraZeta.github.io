@@ -44,6 +44,9 @@
     
     {% include external.html %}
     
+    {% if site.backend.enabled %}
+    <script src="{{ "/js/site-api.js" | prepend: site.baseurl }}"></script>
+    {% endif %}
     <script src="{{ "/js/dark-mode.js" | prepend: site.baseurl }}"></script>
   </body>
 

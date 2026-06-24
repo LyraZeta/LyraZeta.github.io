@@ -45,6 +45,11 @@ baidu:
 cloudflare:
     token: cca534cddcdd47ae911f8da35c780c04
 
+# Backend switch
+# GitHub Pages builds must keep this disabled. Server deployment enables it
+# through _config.server.yml.
+backend:
+    enabled: false
 
 # 《--------------- 配置信息 ----------------》
 
@@ -81,4 +86,11 @@ plugins: [jekyll-paginate,jekyll-sitemap]
 paginate: 20
 paginate_path: "page/:num/"
 
-
+exclude:
+    - bin
+    - deploy
+    - docs
+    - server
+    - test
+    - README.md
+    - test.cpp

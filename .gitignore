@@ -4,3 +4,7 @@ _site/
 .idea
 *.swp
 .Trashes
+
+# Server-local secrets and runtime state. Keep these off public GitHub.
+server/.env
+server/data/protected_posts.yml

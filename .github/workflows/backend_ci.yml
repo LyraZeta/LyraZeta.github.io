@@ -1,0 +1,32 @@
+name: backend_ci
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+          bundler-cache: true
+
+      - name: Run backend tests
+        run: |
+          for test_file in test/server/*_test.rb; do
+            ruby -Iserver/lib:test "$test_file"
+          done
+
+      - name: Build dynamic server site
+        run: bundle exec jekyll build --config _config.yml,_config.server.yml --destination _site

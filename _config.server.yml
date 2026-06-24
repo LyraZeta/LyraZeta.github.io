@@ -1,0 +1,10 @@
+# Personal server dynamic deployment overlay.
+# Build with: bundle exec jekyll build --config _config.yml,_config.server.yml
+
+url: "https://lyrazeta.space"
+
+deployment:
+    mode: dynamic
+
+backend:
+    enabled: true

@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+bundle exec jekyll build --config _config.yml,_config.server.yml --destination _site

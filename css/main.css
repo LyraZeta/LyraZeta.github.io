@@ -1671,6 +1671,19 @@ body.dark-mode .dark-mode-toggle-btn:hover {
     text-decoration: underline;
 }
 
+.dynamic-post-count,
+.footer-stat-divider {
+    color: #6c757d;
+}
+
+.dynamic-post-count {
+    margin-right: 8px;
+}
+
+.footer-stat-divider {
+    margin-right: 8px;
+}
+
 /* Dark Mode Footer */
 body.dark-mode .footer {
     background-color: #1e1e1e;
@@ -1688,6 +1701,11 @@ body.dark-mode .copyright {
 
 body.dark-mode .copyright a {
     color: #4da6ff;
+}
+
+body.dark-mode .dynamic-post-count,
+body.dark-mode .footer-stat-divider {
+    color: #aaa;
 }
 
 body.dark-mode #busuanzi_container_site_pv {

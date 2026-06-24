@@ -1,0 +1,15 @@
+[Unit]
+Description=LyraZeta dynamic site backend
+After=network.target
+
+[Service]
+Type=simple
+User=lyra
+WorkingDirectory=/home/lyra/LyraZeta.github.io
+EnvironmentFile=/home/lyra/LyraZeta.github.io/server/.env
+ExecStart=/home/lyra/LyraZeta.github.io/bin/serve-dynamic
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
