@@ -5,6 +5,9 @@ date: 2025-06-17
 tags: Template   
 ---
 
+## 一个很好的教程
+
+[Markdown 教程](markdown.com.cn/basic-syntax/)
 
 ## 什么是 Markdown
 
