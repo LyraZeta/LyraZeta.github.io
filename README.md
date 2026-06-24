@@ -1,13 +1,15 @@
 # LyraZeta.github.io
 
-个人网站源码，采用同一仓库维护两种部署方式：
+个人网站源码，采用分支隔离维护两种部署方式：
 
-| 部署方式 | 用途 | 入口 | 是否启用后端 |
+| 分支 | 用途 | 入口 | 是否启用后端 |
 | --- | --- | --- | --- |
-| GitHub Pages 静态站 | `lyrazeta.github.io` | `.github/workflows/deploy_pages.yml`、`bin/build-static` | 否 |
-| 个人服务器动态站 | `lyrazeta.space` 或自有服务器 | `bin/build-dynamic`、`bin/serve-dynamic`、`server/` | 是 |
+| `main` / `static-site` | GitHub Pages 静态站、纯静态模板 | GitHub Pages / Jekyll | 否 |
+| `dynamic-site` | 个人服务器动态站 | `bin/build-dynamic`、`bin/serve-dynamic`、`server/` | 是 |
 
-默认 `_config.yml` 关闭后端，确保 GitHub Pages 构建只生成静态页面。服务器部署时叠加 `_config.server.yml`，页面才会加载后端 API 脚本。
+如果只想使用静态模板，请使用 `main` 或 `static-site` 分支。当前 `dynamic-site` 分支包含后端、后台面板、Nginx/systemd 部署模板和后端测试。
+
+默认 `_config.yml` 仍关闭后端，确保本分支执行静态构建时也不会加载后端 API。服务器部署时叠加 `_config.server.yml`，页面才会加载后端 API 脚本。
 
 ## 目录结构
 
