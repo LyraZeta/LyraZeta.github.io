@@ -10,17 +10,17 @@ layout: default
     <p class="post-description">{{ page.description }}</p>  <!-- 增加：文章描述样式：description -->
     {% endif %}
     <div class="post-meta">
-      <img src="/images/calendar.png" width="20px"/>
+      <img src="/images/calendar.png" width="20px" class="post-meta__icon" alt="日期"/>
       <time datetime="{{page.date | date: date_to_xmlschema}}" itemprop="datePublished" class="post-meta__date date">{{page.date | date: "%F"}}</time>
-
       <span id="busuanzi_container_page_pv"> | 阅读：<span id="busuanzi_value_page_pv"></span>次</span>
-    </p>
     </div>
   </header>
 
   {% if site.enableToc %}
-    <h2 class="post-title">目录</h2>
-    {% include toc.html html=content %}
+    <nav class="post-toc" aria-label="文章目录">
+      <h2 class="post-toc__title">目录</h2>
+      {% include toc.html html=content sanitize=true %}
+    </nav>
   {% endif %}
 
   <section class="post">
@@ -31,4 +31,3 @@ layout: default
 
 <!-- {% include new-old.html %} -->   <!-- 调用打赏 -->
 <!-- {% include comments.html %} -->  <!-- 调用评论 -->
-
