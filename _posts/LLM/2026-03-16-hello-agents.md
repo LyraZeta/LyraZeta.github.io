@@ -21,7 +21,7 @@ P(S) &= P(w_1,w_2,\ldots,w_m) \\
 $$
 
 - N-gram（数据稀疏性；泛化能力差）
-Trigram (当 N=3 时) ：假设一个词的出现只与它前面的两个词有关：
+Trigram（当 $N=3$ 时）：假设一个词的出现只与它前面的两个词有关：
 
 $$
 P(w_i\mid w_1,\ldots,w_{i-1})\approx P(w_i\mid w_{i-2},w_{i-1})
@@ -108,7 +108,10 @@ king - man + woman 的结果向量: [0.9 0.2]
 ```
 
 具体用到的步骤：
-1. 词从随机向量变成有语义的向量
+
+#### 1. 词从随机向量变成有语义的向量
+{: .post-step-title .no_toc }
+
 ```python
 import numpy as np
 from gensim.models import Word2Vec
@@ -150,7 +153,9 @@ for word in ["king", "queen", "man", "woman"]:
     print(f"{word}: {vec}")
 ```
 
-2. 学习 + 降维到二维词向量
+#### 2. 学习 + 降维到二维词向量
+{: .post-step-title .no_toc }
+
 ```python
 import numpy as np
 from gensim.models import Word2Vec
@@ -230,4 +235,3 @@ print(f"\n=== 语义验证 ===")
 print(f"king - man + woman 的二维向量: [{result_vec[0]:.2f}, {result_vec[1]:.2f}]")
 print(f"与queen的余弦相似度: {sim:.4f}")
 ```
-
