@@ -37,7 +37,7 @@
   line-height: 1.35; /* 中文段落行高 */
   color: #555;
   word-wrap: break-word;
-  white-space: pre-wrap;
+  white-space: normal;
 }
 
 .post ul, .post ol {
@@ -132,7 +132,26 @@
   word-wrap: break-word;
   overflow-wrap: break-word;
   line-height: 1.35; /* 这里是中文段落的行高 */
-  white-space: pre-wrap;
+  white-space: normal;
+}
+
+/* MathJax formulas can be wider than the article column. Keep them readable
+   without letting long expressions break the layout on mobile. */
+.post mjx-container {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.post mjx-container[display="true"] {
+  display: block;
+  margin: 1em 0;
+  padding: 0.25em 0;
+}
+
+.post mjx-container:not([display="true"]) {
+  display: inline-block;
+  vertical-align: middle;
 }
 
 /* 修复中文段落间距 */
