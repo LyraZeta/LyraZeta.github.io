@@ -12,14 +12,24 @@ tag: LLM
 
 - 统计语言模型
 一个句子出现的概率，等于该句子中每个词出现的条件概率的连乘：
-P(S)=P(w_1,w_2,\ldots,w_m)=P(w_1)\cdot P(w_2\mid w_1)\cdot P(w_3\mid w_1,w_2)\cdots P(w_m\mid w_1,\ldots,w_{m-1})
+
+$$
+\begin{aligned}
+P(S) &= P(w_1,w_2,\ldots,w_m) \\
+&= P(w_1)\cdot P(w_2\mid w_1)\cdot P(w_3\mid w_1,w_2)\cdots P(w_m\mid w_1,\ldots,w_{m-1})
+\end{aligned}
+$$
 
 - N-gram（数据稀疏性；泛化能力差）
 Trigram (当 N=3 时) ：假设一个词的出现只与它前面的两个词有关：
+
+$$
 P(w_i\mid w_1,\ldots,w_{i-1})\approx P(w_i\mid w_{i-2},w_{i-1})
+$$
 
 考虑一个仅包含以下两句话的迷你语料库：datawhale agent learns, datawhale agent works
-```import collections
+```python
+import collections
 
 # 示例语料库，与上方案例讲解中的语料库保持一致
 corpus = "datawhale agent learns datawhale agent works"
@@ -49,8 +59,11 @@ print(f"第三步: P(learns|agent) = {count_agent_learns}/{count_agent} = {p_lea
 # --- 最后:将概率连乘 ---
 p_sentence = p_datawhale * p_agent_given_datawhale * p_learns_given_agent
 print(f"最后: P('datawhale agent learns') ≈ {p_datawhale:.3f} * {p_agent_given_datawhale:.3f} * {p_learns_given_agent:.3f} = {p_sentence:.3f}")
+```
 
->>>
+输出：
+
+```text
 第一步: P(datawhale) = 2/6 = 0.333
 第二步: P(agent|datawhale) = 2/2 = 1.000
 第三步: P(learns|agent) = 1/2 = 0.500
@@ -61,7 +74,7 @@ print(f"最后: P('datawhale agent learns') ≈ {p_datawhale:.3f} * {p_agent_giv
 余弦相似度 ，它通过计算两个词向量夹角的余弦值来衡量它们的相似性。
 例子：`vector('King') - vector('Man') + vector('Woman') `这个向量运算的结果，在向量空间中与 `vector('Queen')`相似。
 
-```
+```python
 import numpy as np
 
 # 假设我们已经学习到了简化的二维词向量
@@ -85,17 +98,22 @@ sim = cosine_similarity(result_vec, embeddings["queen"])
 
 print(f"king - man + woman 的结果向量: {result_vec}")
 print(f"该结果与 'queen' 的相似度: {sim:.4f}")
+```
 
->>>
+输出：
+
+```text
 king - man + woman 的结果向量: [0.9 0.2]
 该结果与 'queen' 的相似度: 1.0000
 ```
 
 具体用到的步骤：
 1. 词从随机向量变成有语义的向量
-```
+```python
 import numpy as np
 from gensim.models import Word2Vec
+import warnings
+
 warnings.filterwarnings('ignore')
 
 # 极简语料（只保留核心语义）
@@ -133,7 +151,7 @@ for word in ["king", "queen", "man", "woman"]:
 ```
 
 2. 学习 + 降维到二维词向量
-```
+```python
 import numpy as np
 from gensim.models import Word2Vec
 from sklearn.decomposition import PCA
@@ -212,5 +230,4 @@ print(f"\n=== 语义验证 ===")
 print(f"king - man + woman 的二维向量: [{result_vec[0]:.2f}, {result_vec[1]:.2f}]")
 print(f"与queen的余弦相似度: {sim:.4f}")
 ```
-
 
