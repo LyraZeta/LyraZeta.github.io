@@ -135,22 +135,24 @@
   white-space: normal;
 }
 
-/* MathJax formulas can be wider than the article column. Keep them readable
-   without letting long expressions break the layout on mobile. */
+/* Keep MathJax formulas in the normal text flow. Tables and code blocks handle
+   their own scrolling; formulas should not show nested scrollbars. */
 .post mjx-container {
-  max-width: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
+  max-width: none;
+  overflow: visible !important;
 }
 
 .post mjx-container[display="true"] {
   display: block;
   margin: 1em 0;
   padding: 0.25em 0;
+  overflow: visible !important;
 }
 
 .post mjx-container:not([display="true"]) {
   display: inline-block;
+  max-width: none;
+  overflow: visible !important;
   vertical-align: middle;
 }
 
@@ -325,6 +327,18 @@
   color: var(--lz-accent);
 }
 
+.post .post-step-title {
+  margin: 1.55em 0 0.75em;
+  padding: 0;
+  background: transparent;
+  border-left: 0;
+  box-shadow: none;
+  color: #172033;
+  font-size: 1.12rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
 body.dark-mode .post,
 body.dark-mode .post p,
 body.dark-mode .post h3,
@@ -335,6 +349,12 @@ body.dark-mode .post h5 {
 
 body.dark-mode .post h2,
 body.dark-mode .post-toc__title {
+  color: #f8fafc;
+}
+
+body.dark-mode .post h4,
+body.dark-mode .post h5,
+body.dark-mode .post .post-step-title {
   color: #f8fafc;
 }
 
@@ -421,6 +441,68 @@ body.dark-mode .post mjx-container {
 body.dark-mode .post mjx-container[display="true"] {
   background: #0f172a;
   border-color: #334155;
+}
+
+/* Final dark-mode readability pass for older posts. Keep this late so legacy
+   heading, emphasis, and inline color rules cannot make text unreadable. */
+body.dark-mode .post {
+  color: #e5e7eb;
+}
+
+body.dark-mode .post p,
+body.dark-mode .post li,
+body.dark-mode .post dd,
+body.dark-mode .post dt,
+body.dark-mode .post figcaption {
+  color: #e5e7eb !important;
+}
+
+body.dark-mode .post h1,
+body.dark-mode .post h2,
+body.dark-mode .post h3,
+body.dark-mode .post h4,
+body.dark-mode .post h5,
+body.dark-mode .post h6,
+body.dark-mode .post .post-step-title {
+  color: #f8fafc !important;
+}
+
+body.dark-mode .post strong,
+body.dark-mode .post b {
+  color: #f8fafc !important;
+}
+
+body.dark-mode .post em,
+body.dark-mode .post i,
+body.dark-mode .post small {
+  color: #e5e7eb !important;
+}
+
+body.dark-mode .post mark {
+  background: rgba(251, 191, 36, 0.22);
+  color: #fef3c7 !important;
+}
+
+body.dark-mode .post p[style*="color"],
+body.dark-mode .post li[style*="color"],
+body.dark-mode .post blockquote[style*="color"],
+body.dark-mode .post table[style*="color"],
+body.dark-mode .post p [style*="color"],
+body.dark-mode .post li [style*="color"],
+body.dark-mode .post blockquote [style*="color"],
+body.dark-mode .post table [style*="color"],
+body.dark-mode .post font[color] {
+  color: #e5e7eb !important;
+}
+
+body.dark-mode .post hr {
+  border-color: #475569;
+}
+
+body.dark-mode .post blockquote strong,
+body.dark-mode .post table strong,
+body.dark-mode .post li strong {
+  color: #f8fafc !important;
 }
 
 @media all and (max-width: 620px) {
