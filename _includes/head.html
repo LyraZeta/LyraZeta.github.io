@@ -19,7 +19,7 @@
   <link href="/images/favicon.png" rel="shortcut icon" type="image/png">
   
   <link rel="stylesheet" href="{{ "/css/main.css" | prepend: site.baseurl }}">
-  {% if page.layout == "post" %}
+  {% if page.layout == "post" or page.layout == "page" %}
   <link rel="stylesheet" href="{{ "/css/post.css" | prepend: site.baseurl }}">
   {% endif %}
   <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet">

@@ -4,10 +4,12 @@ layout: default
 
 <article class="post-container post-container--single" itemscope itemtype="http://schema.org/BlogPosting">
   <header class="post-header">
+    {% if page.date %}
     <div class="post-meta">
       <time datetime="{{page.date | date: date_to_xmlschema}}" itemprop="datePublished" class="post-meta__date date">{{page.date | date: "%F"}}</time>
       <span class="post-meta__tags tags"></span>
     </div>
+    {% endif %}
     <h1 class="post-title">{{ page.title }}</h1>
   </header>
 
