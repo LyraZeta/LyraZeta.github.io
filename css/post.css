@@ -370,6 +370,59 @@ body.dark-mode .post-toc a:hover {
   color: #5eead4;
 }
 
+.post mjx-container[display="true"] {
+  box-sizing: border-box;
+  padding: 0.65em 0.8em;
+  background: #f8fafc;
+  border: 1px solid var(--lz-border);
+  border-radius: 8px;
+}
+
+body.dark-mode .post strong,
+body.dark-mode .post b,
+body.dark-mode .post-description strong,
+body.dark-mode .post-toc strong {
+  color: #f8fafc;
+}
+
+body.dark-mode .post em,
+body.dark-mode .post i {
+  color: #e5e7eb;
+}
+
+body.dark-mode .post a {
+  color: #93c5fd;
+}
+
+body.dark-mode .post a:hover {
+  color: #5eead4;
+}
+
+body.dark-mode .post th,
+body.dark-mode .post td {
+  border-color: #334155;
+  color: #d1d5db;
+}
+
+body.dark-mode .post thead tr:first-child,
+body.dark-mode .post thead th {
+  background: #20332f;
+  color: #f8fafc;
+}
+
+body.dark-mode .post tbody tr:nth-child(even) {
+  background: #1d2939;
+}
+
+body.dark-mode .post mjx-container {
+  color: #f8fafc;
+}
+
+body.dark-mode .post mjx-container[display="true"] {
+  background: #0f172a;
+  border-color: #334155;
+}
+
 @media all and (max-width: 620px) {
   .post {
     font-size: 1rem;

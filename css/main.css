@@ -2090,6 +2090,18 @@ blockquote {
 }
 
 body.dark-mode {
+  --lz-bg: #111827;
+  --lz-surface: #172033;
+  --lz-surface-soft: #1d2939;
+  --lz-border: #334155;
+  --lz-border-strong: #475569;
+  --lz-text: #d1d5db;
+  --lz-muted: #94a3b8;
+  --lz-accent: #5eead4;
+  --lz-accent-soft: rgba(20, 184, 166, 0.14);
+  --lz-link: #93c5fd;
+  --lz-warm: #fbbf24;
+  --lz-shadow: 0 18px 42px rgba(0, 0, 0, 0.32);
   background: #111827;
   color: #d1d5db;
 }
@@ -2154,6 +2166,41 @@ body.dark-mode blockquote {
 body.dark-mode code {
   background: #172554;
   border-color: #1d4ed8;
+  color: #bfdbfe;
+}
+
+body.dark-mode strong,
+body.dark-mode b {
+  color: #f8fafc;
+}
+
+body.dark-mode em,
+body.dark-mode i {
+  color: #e5e7eb;
+}
+
+body.dark-mode .hat_title h3 {
+  color: #fbbf24;
+}
+
+body.dark-mode .post_list a,
+body.dark-mode .card a {
+  color: #93c5fd;
+}
+
+body.dark-mode .post_list a:hover,
+body.dark-mode .card a:hover {
+  color: #5eead4;
+}
+
+body.dark-mode .tag_box.inline span,
+body.dark-mode .copyright,
+body.dark-mode .beian-text {
+  color: #cbd5e1;
+}
+
+body.dark-mode .btn-border-small:hover {
+  background: rgba(37, 99, 235, 0.18);
   color: #bfdbfe;
 }
 
