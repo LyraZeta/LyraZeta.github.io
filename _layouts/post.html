@@ -2,10 +2,6 @@
 layout: default
 ---
 
-<head>
-  <link rel="stylesheet" href="{{ "/css/post.css" | prepend: site.baseurl }}">
-</head>
-
 <!-- 文章布局 -->
 <article class="post-container post-container--single" itemscope itemtype="http://schema.org/BlogPosting">
   <header class="post-header">
@@ -14,8 +10,8 @@ layout: default
     <p class="post-description">{{ page.description }}</p>  <!-- 增加：文章描述样式：description -->
     {% endif %}
     <div class="post-meta">
-      <img src="/images/calendar.png" width="20px"/> 
-      <time datetime="{{page.date | date: date_to_xmlschema}}" itemprop="datePublished" class="post-meta__date date">{{page.date | date: "%F"}}</time>  
+      <img src="/images/calendar.png" width="20px"/>
+      <time datetime="{{page.date | date: date_to_xmlschema}}" itemprop="datePublished" class="post-meta__date date">{{page.date | date: "%F"}}</time>
 
       <span id="busuanzi_container_page_pv"> | 阅读：<span id="busuanzi_value_page_pv"></span>次</span>
     </p>
@@ -35,4 +31,4 @@ layout: default
 
 <!-- {% include new-old.html %} -->   <!-- 调用打赏 -->
 <!-- {% include comments.html %} -->  <!-- 调用评论 -->
- 
+
