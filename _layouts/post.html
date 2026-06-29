@@ -19,7 +19,7 @@ layout: default
   {% if site.enableToc %}
     <nav class="post-toc" aria-label="文章目录">
       <h2 class="post-toc__title">目录</h2>
-      {% include toc.html html=content sanitize=true %}
+      {% include toc.html html=content sanitize=true h_max=3 %}
     </nav>
   {% endif %}
 
