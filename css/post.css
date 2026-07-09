@@ -284,10 +284,10 @@
 .post-description {
   margin: 16px 0 0;
   padding: 12px 16px;
-  background: var(--lz-accent-soft);
+  background: rgba(247, 252, 253, 0.8);
   border-left-color: var(--lz-accent);
-  border-radius: 6px;
-  color: #33514d;
+  border-radius: 10px;
+  color: #26384a;
   font-style: normal;
   line-height: 1.65;
 }
@@ -299,12 +299,10 @@
   margin: 0 0 34px;
   padding: 24px;
   overflow: hidden;
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.96) 0%, rgba(240, 253, 250, 0.74) 100%),
-    var(--lz-surface-soft);
-  border: 1px solid var(--lz-border);
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.58);
   border-radius: 18px;
-  box-shadow: 0 20px 48px rgba(15, 23, 42, 0.09);
+  box-shadow: 0 20px 48px rgba(41, 72, 88, 0.11);
   isolation: isolate;
 }
 
@@ -346,6 +344,58 @@
   background: linear-gradient(90deg, rgba(20, 184, 166, 0.28), rgba(96, 165, 250, 0));
 }
 
+.post-pager {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  max-width: 940px;
+  margin: 30px auto 44px;
+  position: relative;
+  z-index: 1;
+}
+
+.post-pager__item {
+  display: flex;
+  min-height: 76px;
+  flex-direction: column;
+  justify-content: center;
+  padding: 18px 22px;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(184, 204, 214, 0.52);
+  border-radius: 16px;
+  box-shadow: 0 18px 42px rgba(41, 72, 88, 0.14);
+  color: #111827;
+  text-decoration: none;
+  text-shadow: none;
+}
+
+.post-pager__item--next {
+  grid-column: 2;
+  align-items: flex-end;
+  text-align: right;
+}
+
+.post-pager__label {
+  margin-bottom: 6px;
+  color: #174b66;
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.post-pager__title {
+  color: #111827;
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.post-pager__item:hover {
+  background: rgba(255, 255, 255, 0.98);
+  color: #111827;
+  text-decoration: none;
+}
+
 .post-toc ul,
 .post-toc ol {
   margin: 0;
@@ -365,9 +415,9 @@
 .post-toc > ol > li {
   min-width: 0;
   padding: 5px 5px 7px;
-  border: 1px solid rgba(148, 163, 184, 0.14);
+  border: 1px solid rgba(143, 168, 158, 0.18);
   border-radius: 13px;
-  background: rgba(255, 255, 255, 0.36);
+  background: rgba(255, 255, 252, 0.44);
 }
 
 .post-toc li {
@@ -396,7 +446,6 @@
   line-height: 1.48;
   text-decoration: none;
   overflow-wrap: anywhere;
-  transition: background-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
 }
 
 .post-toc a::before {
@@ -413,8 +462,8 @@
 .post-toc > ul > li > a,
 .post-toc > ol > li > a {
   padding: 8px 10px;
-  background: rgba(255, 255, 255, 0.62);
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(255, 255, 252, 0.66);
+  border: 1px solid rgba(143, 168, 158, 0.22);
   color: #1e293b;
   font-weight: 700;
 }
@@ -431,7 +480,6 @@
 .post-toc a:hover {
   color: var(--lz-accent);
   background: rgba(20, 184, 166, 0.1);
-  transform: translateX(2px);
 }
 
 .post-toc a:focus-visible {
@@ -545,6 +593,27 @@ body.dark-mode .post-toc > ol > li > a::before {
 body.dark-mode .post-toc a:hover {
   color: #5eead4;
   background: rgba(45, 212, 191, 0.12);
+}
+
+body.dark-mode .post-pager__item {
+  background: linear-gradient(180deg, rgba(23, 32, 51, 0.98) 0%, rgba(21, 30, 47, 0.98) 100%);
+  border-color: rgba(148, 163, 184, 0.24);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.32);
+  color: #f8fafc;
+}
+
+body.dark-mode .post-pager__label {
+  color: #5eead4;
+}
+
+body.dark-mode .post-pager__title {
+  color: #f8fafc;
+}
+
+body.dark-mode .post-pager__item:hover {
+  background: linear-gradient(180deg, rgba(26, 37, 56, 0.98) 0%, rgba(23, 34, 53, 0.98) 100%);
+  border-color: rgba(45, 212, 191, 0.36);
+  color: #f8fafc;
 }
 
 .post mjx-container[display="true"] {
@@ -687,5 +756,17 @@ body.dark-mode .post li strong {
 
   .post-toc a {
     padding: 6px 8px;
+  }
+
+  .post-pager {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .post-pager__item,
+  .post-pager__item--next {
+    grid-column: 1;
+    align-items: flex-start;
+    text-align: left;
   }
 }
