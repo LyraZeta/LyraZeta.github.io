@@ -44,7 +44,7 @@ http://127.0.0.1:4000
 ## 静态构建
 
 ```bash
-bundle exec jekyll build --config _config.yml
+bundle exec jekyll build --config _config.yml,_config.github-pages.yml
 ```
 
 构建结果默认输出到 `_site/`。该目录是生成产物，不需要提交。

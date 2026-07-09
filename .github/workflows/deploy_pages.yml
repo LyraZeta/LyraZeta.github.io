@@ -1,4 +1,4 @@
-name: deploy_pages
+name: deploy_static_pages
 
 on:
   push:
@@ -6,11 +6,12 @@ on:
       - main
 
 permissions:
+  contents: read
   id-token: write
   pages: write
 
 jobs:
-  deploy:
+  deploy_static:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -19,11 +20,19 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
-      - name: Build
-        uses: actions/jekyll-build-pages@v1
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+          bundler-cache: true
+
+      - name: Build static GitHub Pages site
+        run: bundle exec jekyll build --config _config.yml,_config.github-pages.yml --destination _site
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
 
       - name: Deploy to GitHub Pages
         id: deployment

@@ -1,0 +1,10 @@
+# GitHub Pages static deployment overlay.
+# Build with: bundle exec jekyll build --config _config.yml,_config.github-pages.yml
+
+url: "https://lyrazeta.github.io"
+
+deployment:
+    mode: static
+
+backend:
+    enabled: false
