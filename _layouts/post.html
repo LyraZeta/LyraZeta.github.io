@@ -29,5 +29,19 @@ layout: default
 
 </article>
 
-<!-- {% include new-old.html %} -->   <!-- 调用打赏 -->
-<!-- {% include comments.html %} -->  <!-- 调用评论 -->
+{% if page.previous or page.next %}
+  <nav class="post-pager" aria-label="文章翻页">
+    {% if page.previous %}
+      <a class="post-pager__item post-pager__item--previous" href="{{ page.previous.url | prepend: site.baseurl | replace: '//', '/' }}">
+        <span class="post-pager__label">上一篇</span>
+        <span class="post-pager__title">{{ page.previous.title }}</span>
+      </a>
+    {% endif %}
+    {% if page.next %}
+      <a class="post-pager__item post-pager__item--next" href="{{ page.next.url | prepend: site.baseurl | replace: '//', '/' }}">
+        <span class="post-pager__label">下一篇</span>
+        <span class="post-pager__title">{{ page.next.title }}</span>
+      </a>
+    {% endif %}
+  </nav>
+{% endif %}
