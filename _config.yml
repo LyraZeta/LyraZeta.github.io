@@ -90,7 +90,8 @@ exclude:
     - bin
     - deploy
     - docs
+    - Gemfile
+    - Gemfile.lock
     - server
     - test
     - README.md
-    - test.cpp

@@ -27,4 +27,4 @@ jobs:
           done
 
       - name: Build dynamic server site
-        run: bundle exec jekyll build --config _config.yml,_config.server.yml --destination _site
+        run: bin/build-dynamic

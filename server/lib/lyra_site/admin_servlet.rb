@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "base64"
 require "cgi"
 require "openssl"
 require "uri"
@@ -16,7 +15,8 @@ module LyraSite
       @protection_store = options.fetch(:protection_store)
       @username = ENV.fetch("ADMIN_USERNAME", "admin")
       @password = ENV["ADMIN_PASSWORD"].to_s
-      @secret = ENV["APP_SECRET"].to_s.empty? ? @password : ENV["APP_SECRET"].to_s
+      app_secret = ENV["APP_SECRET"].to_s
+      @secret = app_secret.empty? ? @password : app_secret
     end
 
     def do_GET(request, response)
@@ -176,8 +176,10 @@ module LyraSite
     end
 
     def render_dashboard(response, notice: nil)
-      protected_urls = @protection_store.all.to_h { |entry| [entry.fetch("url"), entry] }
-      rows = @repository.all.map { |post| post_row(post, protected_urls[post.fetch(:url)]) }.join
+      posts = @repository.all
+      protections = @protection_store.all
+      protected_urls = protections.to_h { |entry| [entry.fetch("url"), entry] }
+      rows = posts.map { |post| post_row(post, protected_urls[post.fetch(:url)]) }.join
       notice_html = notice.to_s.empty? ? "" : %(<div class="notice">#{escape(notice)}</div>)
 
       response.status = 200
@@ -187,8 +189,8 @@ module LyraSite
         body: <<~HTML
           #{notice_html}
           <section class="summary">
-            <span>文章 #{@repository.all.length} 篇</span>
-            <span>已保护 #{@protection_store.all.length} 篇</span>
+            <span>文章 #{posts.length} 篇</span>
+            <span>已保护 #{protections.length} 篇</span>
             <a class="logout" href="/admin/logout">退出登录</a>
           </section>
           <table>
