@@ -1,18 +1,18 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 
   {% include head.html %}
 
   <body>
     <script>
-      if (localStorage.getItem('dark-mode') !== 'false') {
+      if (document.documentElement.classList.contains('dark-mode')) {
         document.body.classList.add('dark-mode');
       }
     </script>
 
-    <a href="#" id="dark-mode-toggle" class="dark-mode-toggle-btn" title="切换暗黑模式">
+    <button type="button" id="dark-mode-toggle" class="dark-mode-toggle-btn" title="切换到夜间模式" aria-label="切换到夜间模式" aria-pressed="false">
       <i class="fa fa-moon-o" aria-hidden="true"></i>
-    </a>
+    </button>
 
     <span class="mobile btn-mobile-menu">        
       <div class="nav_container">

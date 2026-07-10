@@ -304,6 +304,7 @@
   border-radius: 18px;
   box-shadow: 0 20px 48px rgba(41, 72, 88, 0.11);
   isolation: isolate;
+  transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease, box-shadow 180ms ease;
 }
 
 .post-toc::before {
@@ -367,6 +368,7 @@
   color: #111827;
   text-decoration: none;
   text-shadow: none;
+  transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
 }
 
 .post-pager__item--next {
@@ -394,6 +396,7 @@
   background: rgba(255, 255, 255, 0.98);
   color: #111827;
   text-decoration: none;
+  transform: translateY(-1px);
 }
 
 .post-toc ul,
@@ -499,41 +502,22 @@
   line-height: 1.45;
 }
 
-body.dark-mode .post,
-body.dark-mode .post p,
-body.dark-mode .post h3,
-body.dark-mode .post h4,
-body.dark-mode .post h5 {
-  color: #d1d5db;
-}
-
-body.dark-mode .post h2,
-body.dark-mode .post-toc__title {
-  color: #f8fafc;
-}
-
-body.dark-mode .post h4,
-body.dark-mode .post h5,
-body.dark-mode .post .post-step-title {
-  color: #f8fafc;
-}
-
 body.dark-mode .post-description,
 body.dark-mode .post-toc {
-  border-color: #334155;
-  color: #cbd5e1;
+  border-color: var(--lz-border);
+  color: var(--lz-text);
 }
 
 body.dark-mode .post-description {
-  background: #172033;
+  background: var(--lz-surface-raised);
 }
 
 body.dark-mode .post-toc {
   background:
-    linear-gradient(135deg, rgba(23, 32, 51, 0.98) 0%, rgba(17, 34, 47, 0.94) 100%),
-    #172033;
+    linear-gradient(135deg, rgba(23, 32, 51, 0.98) 0%, rgba(11, 24, 39, 0.96) 100%),
+    var(--lz-surface-raised);
   border-color: rgba(148, 163, 184, 0.26);
-  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28);
+  box-shadow: var(--lz-shadow);
 }
 
 body.dark-mode .post-toc__title::after {
@@ -552,24 +536,36 @@ body.dark-mode .post-toc li ol {
 }
 
 body.dark-mode .post blockquote {
-  background: #15231f;
-  border-left-color: #2dd4bf;
-  color: #d1d5db;
+  background: var(--lz-quote-bg);
+  border-left-color: var(--lz-accent);
+  color: var(--lz-text);
+}
+
+body.dark-mode .post h3 {
+  background: transparent;
+  border-left: 0;
+  box-shadow: none;
 }
 
 body.dark-mode .post code {
-  background: #172554;
-  border-color: #1d4ed8;
-  color: #bfdbfe;
+  background: var(--lz-code-inline-bg);
+  border-color: var(--lz-code-border);
+  color: var(--lz-code-text);
 }
 
 body.dark-mode .post pre {
-  background: #0f172a;
-  border-color: #334155;
+  background: var(--lz-code-bg);
+  border-color: var(--lz-border);
+}
+
+body.dark-mode .post pre code,
+body.dark-mode .post pre .hljs {
+  background: transparent;
+  border: 0;
 }
 
 body.dark-mode .post-toc a {
-  color: #cbd5e1;
+  color: var(--lz-text);
 }
 
 body.dark-mode .post-toc a::before {
@@ -581,7 +577,7 @@ body.dark-mode .post-toc > ul > li > a,
 body.dark-mode .post-toc > ol > li > a {
   background: rgba(15, 23, 42, 0.42);
   border-color: rgba(148, 163, 184, 0.18);
-  color: #f8fafc;
+  color: var(--lz-heading);
 }
 
 body.dark-mode .post-toc > ul > li > a::before,
@@ -591,29 +587,29 @@ body.dark-mode .post-toc > ol > li > a::before {
 }
 
 body.dark-mode .post-toc a:hover {
-  color: #5eead4;
+  color: var(--lz-accent);
   background: rgba(45, 212, 191, 0.12);
 }
 
 body.dark-mode .post-pager__item {
-  background: linear-gradient(180deg, rgba(23, 32, 51, 0.98) 0%, rgba(21, 30, 47, 0.98) 100%);
+  background: linear-gradient(180deg, var(--lz-surface-raised) 0%, #121b2c 100%);
   border-color: rgba(148, 163, 184, 0.24);
-  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.32);
-  color: #f8fafc;
+  box-shadow: var(--lz-shadow);
+  color: var(--lz-heading);
 }
 
 body.dark-mode .post-pager__label {
-  color: #5eead4;
+  color: var(--lz-accent);
 }
 
 body.dark-mode .post-pager__title {
-  color: #f8fafc;
+  color: var(--lz-heading);
 }
 
 body.dark-mode .post-pager__item:hover {
-  background: linear-gradient(180deg, rgba(26, 37, 56, 0.98) 0%, rgba(23, 34, 53, 0.98) 100%);
+  background: linear-gradient(180deg, #1b283c 0%, #162236 100%);
   border-color: rgba(45, 212, 191, 0.36);
-  color: #f8fafc;
+  color: var(--lz-heading);
 }
 
 .post mjx-container[display="true"] {
@@ -628,7 +624,7 @@ body.dark-mode .post strong,
 body.dark-mode .post b,
 body.dark-mode .post-description strong,
 body.dark-mode .post-toc strong {
-  color: #f8fafc;
+  color: var(--lz-heading);
 }
 
 body.dark-mode .post em,
@@ -637,42 +633,42 @@ body.dark-mode .post i {
 }
 
 body.dark-mode .post a {
-  color: #93c5fd;
+  color: var(--lz-link);
 }
 
 body.dark-mode .post a:hover {
-  color: #5eead4;
+  color: var(--lz-accent);
 }
 
 body.dark-mode .post th,
 body.dark-mode .post td {
-  border-color: #334155;
-  color: #d1d5db;
+  border-color: var(--lz-border);
+  color: var(--lz-text);
 }
 
 body.dark-mode .post thead tr:first-child,
 body.dark-mode .post thead th {
   background: #20332f;
-  color: #f8fafc;
+  color: var(--lz-heading);
 }
 
 body.dark-mode .post tbody tr:nth-child(even) {
-  background: #1d2939;
+  background: var(--lz-surface-soft);
 }
 
 body.dark-mode .post mjx-container {
-  color: #f8fafc;
+  color: var(--lz-heading);
 }
 
 body.dark-mode .post mjx-container[display="true"] {
-  background: #0f172a;
-  border-color: #334155;
+  background: var(--lz-code-bg);
+  border-color: var(--lz-border);
 }
 
 /* Final dark-mode readability pass for older posts. Keep this late so legacy
    heading, emphasis, and inline color rules cannot make text unreadable. */
 body.dark-mode .post {
-  color: #e5e7eb;
+  color: var(--lz-text);
 }
 
 body.dark-mode .post p,
@@ -680,7 +676,7 @@ body.dark-mode .post li,
 body.dark-mode .post dd,
 body.dark-mode .post dt,
 body.dark-mode .post figcaption {
-  color: #e5e7eb !important;
+  color: var(--lz-text) !important;
 }
 
 body.dark-mode .post h1,
@@ -690,18 +686,18 @@ body.dark-mode .post h4,
 body.dark-mode .post h5,
 body.dark-mode .post h6,
 body.dark-mode .post .post-step-title {
-  color: #f8fafc !important;
+  color: var(--lz-heading) !important;
 }
 
 body.dark-mode .post strong,
 body.dark-mode .post b {
-  color: #f8fafc !important;
+  color: var(--lz-heading) !important;
 }
 
 body.dark-mode .post em,
 body.dark-mode .post i,
 body.dark-mode .post small {
-  color: #e5e7eb !important;
+  color: var(--lz-text) !important;
 }
 
 body.dark-mode .post mark {
@@ -718,17 +714,17 @@ body.dark-mode .post li [style*="color"],
 body.dark-mode .post blockquote [style*="color"],
 body.dark-mode .post table [style*="color"],
 body.dark-mode .post font[color] {
-  color: #e5e7eb !important;
+  color: var(--lz-text) !important;
 }
 
 body.dark-mode .post hr {
-  border-color: #475569;
+  border-color: var(--lz-border-strong);
 }
 
 body.dark-mode .post blockquote strong,
 body.dark-mode .post table strong,
 body.dark-mode .post li strong {
-  color: #f8fafc !important;
+  color: var(--lz-heading) !important;
 }
 
 @media all and (max-width: 620px) {
@@ -768,5 +764,16 @@ body.dark-mode .post li strong {
     grid-column: 1;
     align-items: flex-start;
     text-align: left;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .post-toc,
+  .post-pager__item {
+    transition: none;
+  }
+
+  .post-pager__item:hover {
+    transform: none;
   }
 }
