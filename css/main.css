@@ -1401,10 +1401,18 @@ body:not(.dark-mode)::after {
   display: none;
 }
 
-body:not(.dark-mode) .panel-cover {
+body:not(.dark-mode) .panel-cover--collapsed {
   background-color: transparent;
   background-image: none !important;
   box-shadow: none;
+}
+
+body:not(.dark-mode) .panel-cover:not(.panel-cover--collapsed) {
+  background-color: #edf4f7;
+  background-image: url("/images/daylight-tree-bg.jpg") !important;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: cover;
 }
 
 body:not(.dark-mode) .panel-cover--collapsed .panel-cover--overlay {
@@ -1907,10 +1915,18 @@ body.dark-mode::after {
   display: none;
 }
 
-body.dark-mode .panel-cover {
+body.dark-mode .panel-cover--collapsed {
   background-color: transparent;
   background-image: none !important;
   box-shadow: none;
+}
+
+body.dark-mode .panel-cover:not(.panel-cover--collapsed) {
+  background-color: var(--lz-bg);
+  background-image: url("/images/background-cover.jpg") !important;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: cover;
 }
 
 body.dark-mode .content-wrapper::before {
