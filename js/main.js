@@ -1,24 +1,41 @@
-$(document).ready(function() {
+document.addEventListener('DOMContentLoaded', function() {
+  var panel = document.querySelector('.panel-cover');
+  var postList = document.querySelector('.main-post-list');
+  var blogButtons = document.querySelectorAll('a.blog-button');
 
+  function collapsePanel() {
+    if (panel) {
+      panel.classList.add('panel-cover--collapsed');
+    }
+  }
 
-  $('a.blog-button').click(function() {
-    if (location.hash && location.hash == "#blog") return;
-    if ($('.panel-cover').hasClass('panel-cover--collapsed')) return;
-    $('.main-post-list').removeClass('hidden');
-    $('.panel-cover').addClass('panel-cover--collapsed');
+  function showPostList() {
+    if (postList) {
+      postList.classList.remove('hidden');
+    }
+  }
+
+  Array.prototype.forEach.call(blogButtons, function(button) {
+    button.addEventListener('click', function() {
+      if (window.location.hash === '#blog') {
+        return;
+      }
+
+      if (panel && panel.classList.contains('panel-cover--collapsed')) {
+        return;
+      }
+
+      showPostList();
+      collapsePanel();
+    });
   });
 
-  if (window.location.hash && window.location.hash == "#blog") {
-    $('.panel-cover').addClass('panel-cover--collapsed');
-    $('.main-post-list').removeClass('hidden');
+  if (window.location.hash === '#blog') {
+    collapsePanel();
+    showPostList();
   }
 
-  if (window.location.pathname.substring(0, 5) == "/tag/") {
-    $('.panel-cover').addClass('panel-cover--collapsed');
+  if (window.location.pathname.indexOf('/tag/') === 0) {
+    collapsePanel();
   }
-
-  $('.btn-mobile-menu__icon').click(function() {
-    // 导航按钮被点击
-    // this.style.backgroundColor = '#fff'; 设置颜色后会自动消失
-  });  
 });

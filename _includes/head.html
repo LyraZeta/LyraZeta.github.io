@@ -7,6 +7,26 @@
   <meta name="description" content="{% if page.excerpt %}{{ page.excerpt | strip_html | strip_newlines | truncate: 160 }}{% else %}{{ site.description }}{% endif %}">
   <meta name="author" content="lyrazeta">
 
+  <script>
+    (function() {
+      var storedPreference = null;
+      var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+      try {
+        storedPreference = localStorage.getItem('dark-mode');
+      } catch (error) {
+        storedPreference = null;
+      }
+
+      var isDark = storedPreference === null ? prefersDark : storedPreference !== 'false';
+
+      if (isDark) {
+        document.documentElement.classList.add('dark-mode');
+      }
+      document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+    })();
+  </script>
+
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="{% if page.title %}{{ page.title | escape }}{% else %}{{ site.title | escape }}{% endif %}">
   <meta name="twitter:description" content="{% if page.excerpt %}{{ page.excerpt | strip_html | strip_newlines | truncate: 160 }}{% else %}{{ site.description }}{% endif %}">
