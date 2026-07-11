@@ -27,7 +27,7 @@ jobs:
           bundler-cache: true
 
       - name: Build static GitHub Pages site
-        run: bin/build-static
+        run: bundle exec jekyll build --config _config.yml,_config.github-pages.yml --destination _site
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
