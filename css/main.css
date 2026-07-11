@@ -1314,6 +1314,7 @@ nav a {
 
 /* Modern layout polish */
 :root {
+  --lz-sidebar-width: clamp(280px, 24vw, 340px);
   --lz-bg: #eef5f7;
   --lz-surface: #ffffff;
   --lz-surface-raised: #ffffff;
@@ -1377,36 +1378,37 @@ p {
 }
 
 .panel-cover--collapsed {
-  width: clamp(280px, 24vw, 340px);
+  width: var(--lz-sidebar-width);
   max-width: 340px;
 }
 
-body:not(.dark-mode) .panel-cover--collapsed {
-  background-color: #edf4f7;
+body:not(.dark-mode)::before {
+  content: "";
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
   background-image:
-    linear-gradient(180deg, rgba(250, 253, 252, 0.68) 0%, rgba(236, 246, 247, 0.58) 100%),
-    url("/images/daylight-tree-bg.jpg") !important;
-  background-position: center center, left top;
+    linear-gradient(180deg, rgba(248, 252, 252, 0.04) 0%, rgba(238, 247, 248, 0.08) 100%),
+    url("/images/daylight-tree-bg.jpg");
+  background-position: center center, center center;
   background-repeat: no-repeat, no-repeat;
   background-size: auto, cover;
+}
+
+body:not(.dark-mode)::after {
+  display: none;
+}
+
+body:not(.dark-mode) .panel-cover {
+  background-color: transparent;
+  background-image: none !important;
   box-shadow: none;
 }
 
-body:not(.dark-mode) .panel-cover--collapsed::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  right: -210px;
-  bottom: 0;
-  width: 300px;
-  z-index: 1;
-  pointer-events: none;
-  background: linear-gradient(90deg, rgba(238, 247, 248, 0.34) 0%, rgba(238, 247, 248, 0.16) 48%, rgba(238, 247, 248, 0) 100%);
-}
-
 body:not(.dark-mode) .panel-cover--collapsed .panel-cover--overlay {
-  background:
-    linear-gradient(90deg, rgba(238, 247, 248, 0.56) 0%, rgba(246, 251, 251, 0.32) 58%, rgba(238, 247, 248, 0.08) 100%);
+  background: linear-gradient(90deg, rgba(238, 247, 248, 0.58) 0%, rgba(238, 247, 248, 0.34) 100%);
 }
 
 body:not(.dark-mode) .panel-cover--collapsed .panel-inverted,
@@ -1462,7 +1464,7 @@ body:not(.dark-mode) .panel-cover--collapsed .navigation__item a:hover {
 .content-wrapper {
   width: auto;
   min-height: 100%;
-  margin-left: clamp(280px, 24vw, 340px);
+  margin-left: var(--lz-sidebar-width);
   position: relative;
   overflow: hidden;
   isolation: isolate;
@@ -1470,7 +1472,7 @@ body:not(.dark-mode) .panel-cover--collapsed .navigation__item a:hover {
 }
 
 body:not(.dark-mode) .content-wrapper {
-  background: #edf4f7;
+  background: transparent;
 }
 
 body:not(.dark-mode) .content-wrapper::before {
@@ -1479,27 +1481,10 @@ body:not(.dark-mode) .content-wrapper::before {
   top: 0;
   right: 0;
   bottom: 0;
-  left: clamp(280px, 24vw, 340px);
+  left: var(--lz-sidebar-width);
   z-index: 0;
   pointer-events: none;
-  background-image:
-    linear-gradient(180deg, rgba(248, 252, 252, 0.08) 0%, rgba(238, 247, 248, 0.1) 100%),
-    url("/images/daylight-tree-bg.jpg");
-  background-position: center center, center top;
-  background-repeat: no-repeat, no-repeat;
-  background-size: auto, cover;
-}
-
-body:not(.dark-mode) .content-wrapper::after {
-  content: "";
-  position: fixed;
-  top: 0;
-  bottom: 0;
-  left: calc(clamp(280px, 24vw, 340px) - 64px);
-  width: clamp(240px, 18vw, 340px);
-  z-index: 0;
-  pointer-events: none;
-  background: linear-gradient(90deg, rgba(238, 247, 248, 0.26) 0%, rgba(238, 247, 248, 0.12) 46%, rgba(238, 247, 248, 0) 100%);
+  background: linear-gradient(90deg, rgba(238, 247, 248, 0.34) 0%, rgba(238, 247, 248, 0.18) 28%, rgba(238, 247, 248, 0.1) 100%);
 }
 
 .content-wrapper__inner {
@@ -1900,12 +1885,44 @@ body.dark-mode {
 }
 
 body.dark-mode .content-wrapper {
-  background: var(--lz-bg);
+  background: transparent;
 }
 
-body.dark-mode::before,
+body.dark-mode::before {
+  content: "";
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.06) 0%, rgba(15, 23, 42, 0.18) 100%),
+    url("/images/background-cover.jpg");
+  background-position: center center, center center;
+  background-repeat: no-repeat, no-repeat;
+  background-size: auto, cover;
+}
+
 body.dark-mode::after {
   display: none;
+}
+
+body.dark-mode .panel-cover {
+  background-color: transparent;
+  background-image: none !important;
+  box-shadow: none;
+}
+
+body.dark-mode .content-wrapper::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: var(--lz-sidebar-width);
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(12, 26, 46, 0.16) 0%, rgba(17, 24, 39, 0.22) 30%, rgba(15, 23, 42, 0.34) 100%);
 }
 
 body.dark-mode h1,
@@ -1942,6 +1959,10 @@ body.dark-mode .panel-cover--overlay {
   background: linear-gradient(155deg, rgba(19, 34, 57, 0.3) 0%, rgba(7, 18, 36, 0.58) 100%);
 }
 
+body.dark-mode .panel-cover--collapsed .panel-cover--overlay {
+  background: linear-gradient(90deg, rgba(15, 29, 50, 0.34) 0%, rgba(12, 26, 46, 0.16) 100%);
+}
+
 body.dark-mode .panel-inverted,
 body.dark-mode .panel-inverted a {
   color: var(--lz-heading);
@@ -1962,6 +1983,14 @@ body.dark-mode .post_list li,
 body.dark-mode .card li,
 body.dark-mode .footer {
   border-color: var(--lz-border);
+}
+
+body.dark-mode .post-container--single {
+  padding: clamp(26px, 4vw, 42px);
+  background: linear-gradient(180deg, rgba(28, 41, 64, 0.9) 0%, rgba(17, 24, 39, 0.86) 100%);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 22px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
 }
 
 body.dark-mode .post-list li {
@@ -2154,6 +2183,26 @@ body.dark-mode .hljs-regexp {
     height: 36px;
   }
 
+  body.dark-mode .panel-cover {
+    background-color: var(--lz-bg);
+    background-image: url("/images/background-cover.jpg") !important;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: cover;
+  }
+
+  body.dark-mode .content-wrapper::before {
+    left: 0;
+  }
+
+  body:not(.dark-mode) .panel-cover {
+    background-color: #edf4f7;
+    background-image: url("/images/daylight-tree-bg.jpg") !important;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: cover;
+  }
+
   .panel-cover--collapsed {
     width: 100%;
     max-width: none;
@@ -2166,10 +2215,6 @@ body.dark-mode .hljs-regexp {
 
   body:not(.dark-mode) .content-wrapper::before {
     left: 0;
-  }
-
-  body:not(.dark-mode) .content-wrapper::after {
-    display: none;
   }
 
   .content-wrapper__inner {
@@ -2201,6 +2246,11 @@ body.dark-mode .hljs-regexp {
 
   .post-container--single > .post-header .post-title {
     font-size: 2rem;
+  }
+
+  body.dark-mode .post-container--single {
+    padding: 22px 18px;
+    border-radius: 16px;
   }
 
   .post-list__post-title {
