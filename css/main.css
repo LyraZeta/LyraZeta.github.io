@@ -1416,7 +1416,10 @@ body:not(.dark-mode) .panel-cover:not(.panel-cover--collapsed) {
 }
 
 body:not(.dark-mode) .panel-cover--collapsed .panel-cover--overlay {
-  background: linear-gradient(90deg, rgba(238, 247, 248, 0.58) 0%, rgba(238, 247, 248, 0.34) 100%);
+  box-sizing: border-box;
+  background: linear-gradient(90deg, rgba(238, 247, 248, 0.6) 0%, rgba(238, 247, 248, 0.42) 100%);
+  border-right: 1px solid rgba(255, 255, 255, 0.34);
+  box-shadow: inset -18px 0 30px rgba(238, 247, 248, 0.08);
 }
 
 body:not(.dark-mode) .panel-cover--collapsed .panel-inverted,
@@ -1976,7 +1979,10 @@ body.dark-mode .panel-cover--overlay {
 }
 
 body.dark-mode .panel-cover--collapsed .panel-cover--overlay {
-  background: linear-gradient(90deg, rgba(15, 29, 50, 0.34) 0%, rgba(12, 26, 46, 0.16) 100%);
+  box-sizing: border-box;
+  background: linear-gradient(90deg, rgba(15, 29, 50, 0.38) 0%, rgba(12, 26, 46, 0.24) 100%);
+  border-right: 1px solid rgba(148, 163, 184, 0.16);
+  box-shadow: inset -18px 0 30px rgba(2, 8, 23, 0.12);
 }
 
 body.dark-mode .panel-inverted,

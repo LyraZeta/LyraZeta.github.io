@@ -256,9 +256,10 @@
 }
 
 .post table {
-  display: block;
+  display: table;
   width: 100%;
-  overflow-x: auto;
+  table-layout: auto;
+  overflow: visible;
   white-space: normal;
 }
 
@@ -736,6 +737,12 @@ body.dark-mode .post li strong {
   .post h2 {
     margin-top: 1.75em;
     font-size: 1.38rem;
+  }
+
+  .post th,
+  .post td {
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
 
   .post-toc {
