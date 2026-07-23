@@ -1,0 +1,14 @@
+[Unit]
+Description=LyraZeta Jekyll automatic builder
+
+[Service]
+Type=simple
+WorkingDirectory=%h/LyraZeta.github.io
+ExecStartPre=/bin/sh -c 'until /usr/bin/curl --fail --silent --max-time 2 --output /dev/null http://127.0.0.1:4000/api/health; do /usr/bin/sleep 1; done'
+ExecStart=%h/LyraZeta.github.io/bin/watch-dynamic
+Restart=always
+RestartSec=5
+TimeoutStartSec=0
+
+[Install]
+WantedBy=default.target

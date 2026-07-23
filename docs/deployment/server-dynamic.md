@@ -1,6 +1,6 @@
 # Personal Server Dynamic Deployment
 
-个人服务器部署会先生成 Jekyll 静态页面，再由 Ruby 后端服务 `_site/` 并提供 `/api/*`。
+个人服务器部署会先生成 Jekyll 静态页面，再由 Ruby 后端服务 `_site/` 并提供 `/api/*`。生产环境可同时运行 Jekyll 自动构建服务，在文章、布局或前端资源变化后重新生成页面。
 
 ## 本地启动
 
@@ -26,6 +26,40 @@ ADMIN_PASSWORD=你的强密码 PORT=4000 bin/serve-public
 ```bash
 bin/build-dynamic
 ADMIN_PASSWORD=你的强密码 ruby server/app.rb
+```
+
+需要在前台持续监听文件变化时，可以运行：
+
+```bash
+bin/watch-dynamic
+```
+
+该命令会先完成一次完整构建，然后持续监听源文件。它不负责启动 Ruby 后端。
+
+## Systemd 自动构建
+
+后端继续使用系统级服务，自动构建器使用 `lyra` 账号自己的 systemd 服务：
+
+```bash
+sudo install -m 0644 deploy/systemd/lyrazeta-backend.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now lyrazeta-backend.service
+
+install -Dm 0644 deploy/systemd/user/lyrazeta-builder.service \
+  ~/.config/systemd/user/lyrazeta-builder.service
+loginctl enable-linger "$USER"
+systemctl --user daemon-reload
+systemctl --user enable --now lyrazeta-builder.service
+```
+
+`lyrazeta-backend.service` 在启动 Ruby 后端前完成一次构建。`lyrazeta-builder.service` 会等待后端健康检查成功，再使用 Jekyll 的监听功能持续更新 `_site/`。启用 linger 后，即使没有登录会话，自动构建器也会随服务器启动并保持运行。
+
+检查两个服务及自动构建日志：
+
+```bash
+systemctl status lyrazeta-backend.service
+systemctl --user status lyrazeta-builder.service
+journalctl --user -u lyrazeta-builder.service -f
 ```
 
 ## 当前 API
@@ -88,3 +122,4 @@ curl http://127.0.0.1:4000/api/health
 3. 云服务器安全组或本机防火墙没有放行端口。
 4. 域名只指向 GitHub Pages，没有指向个人服务器。
 5. Nginx 直接用 `root /home/lyra/LyraZeta.github.io/_site` 服务 HTML，没有反向代理到 Ruby 后端。文章保护会被绕过。见 [Nginx 反向代理配置](nginx-reverse-proxy.md)。
+6. 修改文章后页面仍是旧内容时，使用 `systemctl --user status lyrazeta-builder.service` 检查自动构建器；也可执行 `bin/build-dynamic` 进行一次手动构建。

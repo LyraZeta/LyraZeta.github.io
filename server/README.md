@@ -21,6 +21,14 @@ ruby server/app.rb
 ADMIN_PASSWORD=你的强密码 bin/serve-dynamic
 ```
 
+需要在后端运行期间自动应用文章和页面改动时，另开一个进程运行：
+
+```bash
+bin/watch-dynamic
+```
+
+生产服务器建议安装 `deploy/systemd/user/lyrazeta-builder.service`，由用户级 systemd 持续运行并在异常或服务器重启后自动恢复。
+
 如果需要从公网直接访问：
 
 ```bash
