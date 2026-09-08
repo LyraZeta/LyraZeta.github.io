@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "uri"
 require "webrick"
 
 require_relative "protected_page"
@@ -20,8 +21,10 @@ module LyraSite
       entry = @protection_store.find(url)
 
       if entry && PasswordHasher.verify?(password, entry.fetch("password_hash"))
+        # Redirect headers need an ASCII URI; the access cookie keeps the canonical path.
+        target = URI::DEFAULT_PARSER.escape(url, /[^A-Za-z0-9\-._~\/]/)
         @access_session.grant(response, url, version: entry.fetch("password_hash"), secure: @client_address.secure?(request))
-        response.set_redirect(WEBrick::HTTPStatus::SeeOther, url)
+        response.set_redirect(WEBrick::HTTPStatus::SeeOther, target)
       else
         ProtectedPage.render(
           response,

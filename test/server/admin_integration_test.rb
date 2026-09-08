@@ -155,6 +155,54 @@ class AdminIntegrationTest < Minitest::Test
 
 
 
+  def test_unlock_redirects_to_chinese_articles_without_a_second_visit
+    articles = [
+      ["2026-06-25-阿丘科技-AI-Agent", "/2026/06/阿丘科技-AI-Agent/", "/2026/06/%E9%98%BF%E4%B8%98%E7%A7%91%E6%8A%80-AI-Agent/"],
+      ["2025-08-01-一起环游世界", "/2025/08/一起环游世界/", "/2025/08/%E4%B8%80%E8%B5%B7%E7%8E%AF%E6%B8%B8%E4%B8%96%E7%95%8C/"]
+    ]
+    articles.each do |slug, url, _|
+      File.write(File.join(@dir, "_posts/#{slug}.md"), "---\ntitle: Chinese Article\n---\nPost content\n")
+      directory = File.join(@dir, "_site", url.delete_prefix("/"))
+      FileUtils.mkdir_p(directory)
+      File.write(File.join(directory, "index.html"), "<h1>PRIVATE CONTENT</h1>")
+    end
+    token = login
+    articles.each do |_, url, encoded_url|
+      res = request("/admin/protections", form: { csrf_token: token, action: "protect", url: url, password: "中文密码" })
+      assert_equal "303", res.code
+      visitor = {}
+      page = request(encoded_url, cookies: visitor)
+      refute_includes page.body, "PRIVATE CONTENT"
+      submitted_url = Nokogiri::HTML(page.body).at_css('input[name="url"]')["value"]
+      assert_equal url, submitted_url
+      wrong = request("/unlock", form: { url: submitted_url, password: "wrong" }, cookies: visitor)
+      assert_equal "200", wrong.code
+      assert_includes wrong.body, "密码错误，请重试。"
+      assert_nil wrong["Location"]
+      assert_nil wrong["Set-Cookie"]
+
+      [submitted_url, encoded_url].each do |target|
+        visitor = {}
+        unlocked = request("/unlock", form: { url: target, password: "中文密码" }, cookies: visitor,
+                           headers: { "X-Forwarded-Proto" => "https" })
+        assert_equal "303", unlocked.code, @log.string
+        assert unlocked["Location"].ascii_only?
+        location = URI.parse(unlocked["Location"])
+        assert_equal encoded_url, location.path
+        assert_nil location.query
+        assert_nil location.fragment
+        assert_includes unlocked["Set-Cookie"], "; Secure"
+        article = request(location.request_uri, cookies: visitor)
+        assert_equal "200", article.code
+        assert_includes article.body, "PRIVATE CONTENT"
+        assert_includes article["Cache-Control"], "no-store"
+      end
+    end
+    refute_includes request(articles.first.last, cookies: {}).body, "PRIVATE CONTENT"
+    unknown = request("/unlock", form: { url: "/2026/06/not-a-post/", password: "中文密码" }, cookies: {})
+    assert_nil unknown["Location"]
+    assert_nil unknown["Set-Cookie"]
+  end
 
   def test_proxy_https_cookies_and_static_asset_allowlist
     res = request("/admin/login", headers: { "X-Forwarded-Proto" => "https" })
