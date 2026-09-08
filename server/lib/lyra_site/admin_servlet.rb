@@ -52,7 +52,8 @@ module LyraSite
         posts_page(request, response)
       when "/admin/visits"
         filters = visit_filters(request)
-        render(response, "visits", request: request, filters: filters, result: @activity.visits(filters))
+        ip_notes = @activity.allowed_ips.to_h { |entry| [entry.fetch("ip"), entry.fetch("note")] }
+        render(response, "visits", request: request, filters: filters, result: @activity.visits(filters), ip_notes: ip_notes)
       when "/admin/visits.csv"
         export(request, response)
       when "/admin/audit"

@@ -13,10 +13,12 @@
   <thead><tr><th>时间</th><th>访客 IP</th><th>页面 / 来源</th><th>状态</th><th>耗时</th></tr></thead>
   <tbody>
   <% @result[:rows].each do |row| %>
+    <% note = (@ip_notes || {})[ClientAddress.normalize_ip(row['ip'])] %>
     <tr>
       <td data-label="时间" class="nowrap"><time datetime="<%= Time.at(row['occurred_at']).utc.iso8601 %>"><%= timestamp(row['occurred_at']) %></time></td>
       <td data-label="访客 IP">
         <a class="mono ip-address" href="<%= link_to('/admin/visits', 'ip' => row['ip'], 'page' => nil) %>"><%= e(row['ip']) %></a>
+        <% unless note.to_s.empty? %><small class="visitor-note"><span class="muted">白名单备注：</span><%= e(note) %></small><% end %>
         <small><%= row['bot'] == 1 ? '疑似爬虫' : '其他客户端' %></small>
       </td>
       <td data-label="页面 / 来源"><span class="path"><%= e(row['path']) %></span><details class="request-details"><summary>请求详情</summary><dl><dt>来源</dt><dd><%= row['referrer'].empty? ? '无来源信息' : e(row['referrer']) %></dd><dt>User-Agent</dt><dd><%= row['user_agent'].empty? ? '未提供' : e(row['user_agent']) %></dd></dl></details></td>

@@ -229,6 +229,37 @@ class AdminIntegrationTest < Minitest::Test
     assert_nil request("/unlock", form: { url: urls.last, password: "" }, headers: headers, cookies: visitor)["Location"]
   end
 
+  def test_visit_details_show_current_allowlist_notes_without_changing_history_or_csv
+    %w[::ffff:203.0.113.5 2001:0db8:0000:0000:0000:0000:0000:0008 203.0.113.50 203.0.113.6].each do |ip|
+      request("/", headers: { "X-Forwarded-For" => ip }, cookies: {})
+    end
+    wait_for_visit_count(4)
+    original_visits = database { |db| db.execute("SELECT * FROM visits ORDER BY id") }
+    token = login
+    note = '家用设备 <script>alert("note")</script> & 朋友'
+    { "203.0.113.5" => note, "2001:db8::8" => "IPv6 设备", "203.0.113.6" => "" }.each do |ip, text|
+      res = request("/admin/allowlist", form: { csrf_token: token, action: "add", ip: ip, note: text })
+      assert_equal "303", res.code
+    end
+    doc = Nokogiri::HTML(request("/admin/visits").body)
+    cells = doc.css('td[data-label="访客 IP"]').to_h { |cell| [cell.at_css(".ip-address").text, cell] }
+    assert_equal "白名单备注：#{note}", cells.fetch("203.0.113.5").at_css(".visitor-note").text
+    assert_empty cells.fetch("203.0.113.5").css("script")
+    assert_equal "白名单备注：IPv6 设备", cells.fetch("2001:db8::8").at_css(".visitor-note").text
+    %w[203.0.113.50 203.0.113.6].each { |ip| assert_nil cells.fetch(ip).at_css(".visitor-note") }
+    filtered = Nokogiri::HTML(request("/admin/visits?ip=203.0.113.5").body)
+    assert_equal 1, filtered.css(".visitor-note").length
+    csv = request("/admin/visits.csv")
+    assert_equal %w[time_utc ip path status duration_ms referrer user_agent bot], CSV.parse(csv.body.delete_prefix("\uFEFF")).first
+    refute_includes csv.body, note
+
+    request("/admin/allowlist", form: { csrf_token: token, action: "remove", ip: "203.0.113.5" })
+    assert_empty Nokogiri::HTML(request("/admin/visits?ip=203.0.113.5").body).css(".visitor-note")
+    request("/admin/allowlist", form: { csrf_token: token, action: "add", ip: "::ffff:203.0.113.5", note: "更新后的备注" })
+    refreshed = Nokogiri::HTML(request("/admin/visits?ip=203.0.113.5").body)
+    assert_equal "白名单备注：更新后的备注", refreshed.at_css(".visitor-note").text
+    assert_equal original_visits, database { |db| db.execute("SELECT * FROM visits ORDER BY id") }
+  end
 
   def test_allowlist_uses_trusted_client_identity_not_spoofed_headers_or_proxy_fallback
     token = login

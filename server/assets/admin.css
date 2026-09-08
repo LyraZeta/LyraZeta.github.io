@@ -205,6 +205,7 @@ label { font-size: 13px; color: var(--muted); }
 .data-table tbody tr:hover { background: var(--row-hover); }
 .data-table strong { font-size: 14px; font-weight: 550; }
 .data-table small { margin-top: 4px; font-size: 12px; }
+.data-table .visitor-note { color: var(--accent); }
 .path, .ip-address { overflow-wrap: anywhere; }
 .nowrap { white-space: nowrap; }
 .posts-table th:first-child { width: 55%; }
