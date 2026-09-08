@@ -13,24 +13,25 @@ module LyraSite
       @secret = secret.to_s
     end
 
-    def authorized?(request, url)
+    def authorized?(request, url, version:)
       canonical = ProtectionStore.canonical_url(url)
       cookie = request.cookies.find { |item| item.name == cookie_name(canonical) }
       return false unless cookie
 
-      PasswordHasher.secure_compare(cookie.value, token_for(canonical))
+      PasswordHasher.secure_compare(cookie.value, token_for(canonical, version))
     end
 
-    def grant(response, url)
+    def grant(response, url, version:, secure: false)
       canonical = ProtectionStore.canonical_url(url)
       cookie = [
-        "#{cookie_name(canonical)}=#{token_for(canonical)}",
+        "#{cookie_name(canonical)}=#{token_for(canonical, version)}",
         "Path=/",
         "Max-Age=#{MAX_AGE}",
         "HttpOnly",
         "SameSite=Lax"
       ].join("; ")
 
+      cookie += "; Secure" if secure
       response["Set-Cookie"] = cookie
     end
 
@@ -41,8 +42,8 @@ module LyraSite
       "lyra_post_#{digest}"
     end
 
-    def token_for(url)
-      OpenSSL::HMAC.hexdigest("SHA256", @secret, "post-access:#{url}")
+    def token_for(url, version)
+      OpenSSL::HMAC.hexdigest("SHA256", @secret, "post-access:#{url}:#{version}")
     end
   end
 end

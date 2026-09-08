@@ -2,4 +2,4 @@
 set -euo pipefail
 
 bin/build-dynamic
-exec ruby server/app.rb
+exec bundle exec ruby server/app.rb

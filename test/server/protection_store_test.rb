@@ -53,4 +53,22 @@ class ProtectionStoreTest < Minitest::Test
 
     refute @store.protected?("/post/")
   end
+
+  def test_corrupt_config_does_not_silently_remove_protection
+    File.write(@path, "posts: [invalid")
+    assert_raises(Psych::SyntaxError) { @store.protected?("/post/") }
+    File.write(@path, "posts: invalid")
+    assert_raises(LyraSite::ProtectionStore::InvalidConfiguration) { @store.all }
+    File.write(@path, "posts:\n  - url: /post/\n")
+    assert_raises(LyraSite::ProtectionStore::InvalidConfiguration) { @store.all }
+  end
+
+  def test_concurrent_changes_preserve_all_posts
+    threads = 4.times.map do |index|
+      Thread.new { @store.protect(url: "/post-#{index}/", title: "Post", source_path: "test.md", password: "test") }
+    end
+    threads.each(&:value)
+    assert_equal 4, @store.all.length
+    assert_equal 0o600, File.stat(@path).mode & 0o777
+  end
 end

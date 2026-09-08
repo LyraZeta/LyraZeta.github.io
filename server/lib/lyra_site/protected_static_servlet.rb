@@ -4,6 +4,7 @@ require "webrick"
 
 require_relative "protected_page"
 require_relative "protection_store"
+require_relative "public_content"
 
 module LyraSite
   class ProtectedStaticServlet < WEBrick::HTTPServlet::AbstractServlet
@@ -11,6 +12,7 @@ module LyraSite
       super(server)
       @protection_store = options.fetch(:protection_store)
       @access_session = options.fetch(:access_session)
+      @public_content = PublicContent.new(static_root: options.fetch(:static_root), protection_store: @protection_store)
       @file_handler = WEBrick::HTTPServlet::FileHandler.new(
         server,
         options.fetch(:static_root),
@@ -24,9 +26,11 @@ module LyraSite
       url = ProtectionStore.canonical_url(request.path)
       entry = @protection_store.find(url)
 
-      if entry && !@access_session.authorized?(request, url)
+      if entry && !@access_session.authorized?(request, url, version: entry.fetch("password_hash"))
         ProtectedPage.render(response, url: url, title: entry.fetch("title"))
       else
+        return if @public_content.serve(request.path, response)
+
         @file_handler.service(request, response)
         disable_cache(response) if entry
       end

@@ -1,420 +1,249 @@
 # frozen_string_literal: true
 
-require "cgi"
-require "openssl"
-require "uri"
+require "csv"
 require "webrick"
 
-require_relative "password_hasher"
+require_relative "admin_session"
+require_relative "admin_view"
 
 module LyraSite
   class AdminServlet < WEBrick::HTTPServlet::AbstractServlet
+    ASSETS = { "admin.css" => "text/css", "admin.js" => "text/javascript", "icons.svg" => "image/svg+xml" }.freeze
+    TITLES = { "overview" => "访问概览", "posts" => "文章管理", "visits" => "访问日志", "audit" => "操作审计", "settings" => "设置", "login" => "后台登录" }.freeze
+    NOTICES = { "protected" => "文章访问密码已更新，旧的解锁凭证已失效。", "public" => "文章已恢复公开访问。", "saved" => "日志设置已保存。", "cleared" => "访问日志已清空。", "logout" => "已退出登录。" }.freeze
+
     def initialize(server, options = {})
       super(server)
       @repository = options.fetch(:repository)
       @protection_store = options.fetch(:protection_store)
-      @username = ENV.fetch("ADMIN_USERNAME", "admin")
-      @password = ENV["ADMIN_PASSWORD"].to_s
-      app_secret = ENV["APP_SECRET"].to_s
-      @secret = app_secret.empty? ? @password : app_secret
+      @activity = options.fetch(:activity_store)
+      @sessions = options.fetch(:admin_session)
+      @address = options.fetch(:client_address)
+    end
+
+    def service(request, response)
+      security_headers(response)
+      super
     end
 
     def do_GET(request, response)
-      case request.path
-      when "/admin/login"
-        render_login(response, notice: utf8(request.query["notice"]))
-      when "/admin/logout"
-        clear_admin_session(response)
-        response.set_redirect(WEBrick::HTTPStatus::SeeOther, "/admin/login?notice=#{URI.encode_www_form_component('已退出登录')}")
-      else
-        return unless authorize_admin(request, response)
+      return asset(request, response) if request.path.start_with?("/admin/assets/")
+      return disabled(response) unless @sessions.enabled?
 
-        render_dashboard(response, notice: utf8(request.query["notice"]))
+      if request.path == "/admin/login"
+        return redirect(response, "/admin") if @sessions.find(request)
+
+        return login_page(request, response)
       end
+
+      session = authorize(request, response)
+      return unless session
+
+      @csrf = session.fetch(:csrf)
+      case request.path
+      when "/admin", "/admin/"
+        render(response, "overview", request: request, overview: @activity.overview(days: request.query["days"].to_i),
+               post_count: @repository.all.length, protected_count: @protection_store.all.length)
+      when "/admin/posts"
+        posts_page(request, response)
+      when "/admin/visits"
+        filters = visit_filters(request)
+        render(response, "visits", request: request, filters: filters, result: @activity.visits(filters))
+      when "/admin/visits.csv"
+        export(request, response)
+      when "/admin/audit"
+        render(response, "audit", request: request, result: @activity.audit_events(page: request.query["page"]))
+      when "/admin/settings"
+        render(response, "settings", request: request)
+      else
+        error(response, 404, "未找到后台页面。")
+      end
+    rescue ArgumentError
+      error(response, 400, "筛选条件无效，请检查日期格式。")
     end
 
     def do_POST(request, response)
-      if request.path == "/admin/login"
-        return forbidden(response) unless same_origin?(request)
+      return disabled(response) unless @sessions.enabled?
+      return handle_login(request, response) if request.path == "/admin/login"
 
-        return handle_login(request, response)
-      end
+      session = authorize(request, response)
+      return unless session
+      return error(response, 403, "表单已失效，请刷新页面后重试。") unless @sessions.valid_csrf?(session, request.query["csrf_token"])
 
-      return unless authorize_admin(request, response)
-      return forbidden(response) unless same_origin?(request)
+      case request.path
+      when "/admin/logout"
+        audit(request, "logout")
+        @sessions.logout(request)
+        set_cookie(response, AdminSession::COOKIE, "deleted", 0, request)
+        redirect(response, "/admin/login?notice=logout")
+      when "/admin/protections"
+        update_protection(request, response)
+      when "/admin/settings"
+        days = request.query["retention_days"]
+        @activity.update_settings(enabled: request.query["enabled"] == "1", retention_days: days)
+        audit(request, "settings", "enabled=#{request.query['enabled'] == '1'}; retention_days=#{days.to_i}")
+        redirect(response, "/admin/settings?notice=saved")
+      when "/admin/visits/clear"
+        return error(response, 400, "请输入 DELETE 确认清空访问日志。") unless request.query["confirmation"] == "DELETE"
 
-      action = utf8(request.query["action"])
-      url = ProtectionStore.canonical_url(request.query["url"])
-      post = @repository.all.find { |item| ProtectionStore.canonical_url(item.fetch(:url)) == url }
-
-      case action
-      when "protect"
-        return redirect(response, "未找到文章") unless post
-
-        @protection_store.protect(
-          url: post.fetch(:url),
-          title: post.fetch(:title),
-          source_path: post.fetch(:source_path),
-          password: utf8(request.query["password"])
-        )
-        redirect(response, "已更新访问密码")
-      when "unprotect"
-        @protection_store.unprotect(url)
-        redirect(response, "已取消访问保护")
+        @activity.clear_visits
+        audit(request, "clear_visits")
+        redirect(response, "/admin/settings?notice=cleared")
       else
-        redirect(response, "未知操作")
+        error(response, 404, "未找到后台操作。")
       end
-    rescue ArgumentError => error
-      redirect(response, error.message == "password_required" ? "密码不能为空" : "操作失败")
+    rescue ArgumentError
+      error(response, 400, "输入无效：文章密码不能为空，保留天数须为 1 到 365 的整数。")
     end
 
     private
 
-    def utf8(value)
-      ProtectionStore.utf8(value)
+    def security_headers(response)
+      response["Cache-Control"] = "no-store"
+      response["X-Content-Type-Options"] = "nosniff"
+      response["X-Frame-Options"] = "DENY"
+      response["Referrer-Policy"] = "no-referrer"
+      response["X-Robots-Tag"] = "noindex, nofollow"
+      response["Content-Security-Policy"] = "default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'"
     end
 
-    def authorize_admin(request, response)
-      return admin_disabled(response) if @password.empty?
+    def asset(request, response)
+      name = request.path.delete_prefix("/admin/assets/")
+      return error(response, 404, "资源不存在。") unless ASSETS.key?(name)
 
-      return true if admin_session_valid?(request)
+      response["Content-Type"] = "#{ASSETS.fetch(name)}; charset=utf-8"
+      response["Cache-Control"] = "public, max-age=3600"
+      response.body = File.binread(File.expand_path("../../assets/#{name}", __dir__))
+    end
 
-      response.set_redirect(WEBrick::HTTPStatus::SeeOther, "/admin/login")
-      false
+    def authorize(request, response)
+      session = @sessions.find(request)
+      redirect(response, "/admin/login") unless session
+      session
     end
 
     def handle_login(request, response)
-      return admin_disabled(response) if @password.empty?
+      return error(response, 403, "登录表单已失效，请重新打开登录页面。") unless @sessions.valid_login_csrf?(request)
 
-      user = utf8(request.query["username"])
-      password = utf8(request.query["password"])
-
-      if secure_equal?(user, @username) && secure_equal?(password, @password)
-        grant_admin_session(response)
-        response.set_redirect(WEBrick::HTTPStatus::SeeOther, "/admin")
+      result = @sessions.login(ip: @address.ip(request), username: utf8(request.query["username"]), password: utf8(request.query["password"]))
+      if result == :limited
+        response["Retry-After"] = AdminSession::LOGIN_WINDOW.to_s
+        login_page(request, response, error: "登录尝试过多，请在 15 分钟后重试。", status: 429)
+      elsif result == :invalid
+        audit(request, "login_failed")
+        login_page(request, response, error: "用户名或密码错误。", status: 401)
       else
-        render_login(response, error: "用户名或密码错误。")
+        audit(request, "login")
+        @sessions.logout(request)
+        set_cookie(response, AdminSession::COOKIE, result, AdminSession::MAX_AGE, request)
+        redirect(response, "/admin")
       end
     end
 
-    def secure_equal?(left, right)
-      PasswordHasher.secure_compare(left.to_s, right.to_s)
+    def login_page(request, response, error: nil, status: 200)
+      @csrf = @sessions.login_challenge
+      set_cookie(response, AdminSession::LOGIN_COOKIE, @csrf, AdminSession::LOGIN_WINDOW, request)
+      render(response, "login", request: request, error: error, status: status)
     end
 
-    def admin_session_valid?(request)
-      cookie = request.cookies.find { |item| item.name == admin_cookie_name }
-      return false unless cookie
-
-      secure_equal?(cookie.value, admin_token)
+    def set_cookie(response, name, value, age, request)
+      parts = ["#{name}=#{value}", "Path=/admin", "Max-Age=#{age}", "HttpOnly", "SameSite=Strict"]
+      parts << "Secure" if @address.secure?(request)
+      response["Set-Cookie"] = parts.join("; ")
     end
 
-    def grant_admin_session(response)
-      response["Set-Cookie"] = [
-        "#{admin_cookie_name}=#{admin_token}",
-        "Path=/admin",
-        "Max-Age=#{60 * 60 * 12}",
-        "HttpOnly",
-        "SameSite=Lax"
-      ].join("; ")
-    end
-
-    def clear_admin_session(response)
-      response["Set-Cookie"] = [
-        "#{admin_cookie_name}=deleted",
-        "Path=/admin",
-        "Max-Age=0",
-        "HttpOnly",
-        "SameSite=Lax"
-      ].join("; ")
-    end
-
-    def admin_cookie_name
-      "lyra_admin_session"
-    end
-
-    def admin_token
-      OpenSSL::HMAC.hexdigest("SHA256", @secret, "admin:#{@username}:#{@password}")
-    end
-
-    def admin_disabled(response)
-      response.status = 503
-      response["Content-Type"] = "text/html; charset=utf-8"
-      response.body = page_shell(
-        title: "后台未启用",
-        body: <<~HTML
-          <p>请设置 <code>ADMIN_PASSWORD</code> 后重启动态服务。</p>
-          <pre>ADMIN_PASSWORD=你的强密码 bin/serve-dynamic</pre>
-        HTML
-      )
-      false
-    end
-
-    def same_origin?(request)
-      origin = request["Origin"].to_s
-      referer = request["Referer"].to_s
-      header = origin.empty? ? referer : origin
-      return true if header.empty?
-
-      uri = URI.parse(header)
-      uri.host == request.host && uri.port == request.port
-    rescue URI::InvalidURIError
-      false
-    end
-
-    def forbidden(response)
-      response.status = 403
-      response["Content-Type"] = "text/plain; charset=utf-8"
-      response.body = "跨站请求已被拒绝。"
-    end
-
-    def redirect(response, notice)
-      encoded_notice = URI.encode_www_form_component(utf8(notice))
-      response.set_redirect(
-        WEBrick::HTTPStatus::SeeOther,
-        "/admin?notice=#{encoded_notice}"
-      )
-    end
-
-    def render_dashboard(response, notice: nil)
+    def posts_page(request, response)
+      filters = request.query.slice("q", "state", "page").transform_values { |value| utf8(value) }
+      protections = @protection_store.all.to_h { |entry| [entry.fetch("url"), entry] }
       posts = @repository.all
-      protections = @protection_store.all
-      protected_urls = protections.to_h { |entry| [entry.fetch("url"), entry] }
-      rows = posts.map { |post| post_row(post, protected_urls[post.fetch(:url)]) }.join
-      notice_html = notice.to_s.empty? ? "" : %(<div class="notice">#{escape(notice)}</div>)
+      edit = posts.find { |post| post[:url] == utf8(request.query["edit"]) }
+      query = filters["q"].to_s.downcase.strip
+      posts = posts.select { |post| [post[:title], post[:category], post[:url], *post[:tags]].join(" ").downcase.include?(query) }
+      posts = posts.select { |post| protections.key?(post[:url]) } if filters["state"] == "protected"
+      posts = posts.reject { |post| protections.key?(post[:url]) } if filters["state"] == "public"
+      total = posts.length
+      pages = [(total.to_f / ActivityStore::PAGE_SIZE).ceil, 1].max
+      page = [[filters["page"].to_i, 1].max, pages].min
+      render(response, "posts", request: request, filters: filters, protections: protections, edit: edit,
+             result: { rows: posts.slice((page - 1) * ActivityStore::PAGE_SIZE, ActivityStore::PAGE_SIZE) || [], total: total, page: page, pages: pages })
+    end
 
-      response.status = 200
+
+
+
+
+    def update_protection(request, response)
+      url = ProtectionStore.canonical_url(request.query["url"])
+      post = @repository.all.find { |item| ProtectionStore.canonical_url(item.fetch(:url)) == url }
+      return error(response, 404, "未找到文章。") unless post
+
+      case request.query["action"]
+      when "protect"
+        @protection_store.protect(url: post[:url], title: post[:title], source_path: post[:source_path], password: utf8(request.query["password"]))
+        audit(request, "protect", post[:url])
+        redirect(response, "/admin/posts?notice=protected")
+      when "unprotect"
+        @protection_store.unprotect(url)
+        audit(request, "unprotect", post[:url])
+        redirect(response, "/admin/posts?notice=public")
+      else
+        error(response, 400, "未知的文章操作。")
+      end
+    end
+
+    def visit_filters(request)
+      request.query.slice("ip", "path", "from", "to", "status", "bot", "page").transform_values { |value| utf8(value) }
+    end
+
+    def export(request, response)
+      result = @activity.visits(visit_filters(request), export: true)
+      audit(request, "export", "rows=#{result[:rows].length}")
+      response["Content-Type"] = "text/csv; charset=utf-8"
+      response["Content-Disposition"] = 'attachment; filename="visits.csv"'
+      response["X-Export-Total"] = result[:total].to_s
+      response["X-Export-Limit"] = ActivityStore::EXPORT_LIMIT.to_s
+      response.body = "\uFEFF" + CSV.generate do |csv|
+        csv << %w[time_utc ip path status duration_ms referrer user_agent bot]
+        result[:rows].each do |row|
+          values = [Time.at(row["occurred_at"]).utc.iso8601, *row.values_at("ip", "path", "status", "duration_ms", "referrer", "user_agent", "bot")]
+          csv << values.map { |value| csv_cell(value) }
+        end
+      end
+    end
+
+    def csv_cell(value)
+      text = value.to_s
+      text.match?(/\A[\s\uFEFF]*[=+@-]/) ? "'#{text}" : text
+    end
+
+    def audit(request, action, target = "")
+      @activity.audit(actor: @sessions.username, ip: @address.ip(request) || "unknown", action: action, target: target)
+    end
+
+    def render(response, view, request:, status: 200, **data)
+      response.status = status
       response["Content-Type"] = "text/html; charset=utf-8"
-      response.body = page_shell(
-        title: "LyraZeta 后台",
-        body: <<~HTML
-          #{notice_html}
-          <section class="summary">
-            <span>文章 #{posts.length} 篇</span>
-            <span>已保护 #{protections.length} 篇</span>
-            <a class="logout" href="/admin/logout">退出登录</a>
-          </section>
-          <table>
-            <thead>
-              <tr>
-                <th>文章</th>
-                <th>日期</th>
-                <th>状态</th>
-                <th>操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              #{rows}
-            </tbody>
-          </table>
-        HTML
-      )
+      response.body = AdminView.new(view: view, title: TITLES.fetch(view), username: @sessions.username,
+                                    csrf: @csrf, notice: NOTICES[request.query["notice"]], filters: {},
+                                    settings: @activity.settings, **data).render
     end
 
-    def render_login(response, notice: nil, error: nil)
-      notice_html = notice.to_s.empty? ? "" : %(<div class="notice">#{escape(notice)}</div>)
-      error_html = error.to_s.empty? ? "" : %(<div class="error">#{escape(error)}</div>)
+    def disabled(response)
+      error(response, 503, "后台未启用，请在服务器设置 ADMIN_PASSWORD 后重启后端。")
+    end
 
-      response.status = 200
+    def error(response, status, message)
+      response.status = status
       response["Content-Type"] = "text/html; charset=utf-8"
-      response.body = page_shell(
-        title: "后台登录",
-        body: <<~HTML
-          <section class="login-panel">
-            #{notice_html}
-            #{error_html}
-            <form action="/admin/login" method="post">
-              <label for="username">用户名</label>
-              <input id="username" name="username" type="text" value="#{escape(@username)}" autocomplete="username" required>
-              <label for="password">密码</label>
-              <input id="password" name="password" type="password" autocomplete="current-password" required autofocus>
-              <button type="submit">登录</button>
-            </form>
-          </section>
-        HTML
-      )
+      response.body = AdminView.new(view: "error", title: "请求未完成", error: message).render
     end
 
-    def post_row(post, protection)
-      url = post.fetch(:url)
-      protected_label = protection ? "已保护" : "公开"
-      protected_class = protection ? "protected" : "public"
-
-      <<~HTML
-        <tr>
-          <td>
-            <strong>#{escape(post.fetch(:title))}</strong>
-            <small>#{escape(url)}</small>
-          </td>
-          <td>#{escape(post.fetch(:date))}</td>
-          <td><span class="status #{protected_class}">#{protected_label}</span></td>
-          <td>
-            <form action="/admin/protections" method="post">
-              <input type="hidden" name="url" value="#{escape(url)}">
-              <input type="password" name="password" placeholder="设置/更新访问密码" autocomplete="new-password">
-              <button type="submit" name="action" value="protect">加密</button>
-              <button type="submit" name="action" value="unprotect" class="secondary">取消</button>
-            </form>
-          </td>
-        </tr>
-      HTML
+    def redirect(response, path)
+      response.set_redirect(WEBrick::HTTPStatus::SeeOther, path)
     end
 
-    def page_shell(title:, body:)
-      <<~HTML
-        <!DOCTYPE html>
-        <html lang="zh-CN">
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1">
-          <title>#{escape(title)}</title>
-          <style>
-            body {
-              margin: 0;
-              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-              background: #f6f8fb;
-              color: #1f2933;
-            }
-            header {
-              padding: 20px 32px;
-              background: #102a43;
-              color: #fff;
-            }
-            main {
-              padding: 24px 32px 48px;
-            }
-            h1 {
-              margin: 0;
-              font-size: 24px;
-            }
-            .summary {
-              display: flex;
-              gap: 12px;
-              margin-bottom: 16px;
-            }
-            .summary span,
-            .notice,
-            .error {
-              padding: 8px 12px;
-              border-radius: 6px;
-            }
-            .notice {
-              background: #e6f4ff;
-              color: #0b5cab;
-            }
-            .error {
-              margin-bottom: 12px;
-              background: #fee2e2;
-              color: #991b1b;
-            }
-            .logout {
-              display: inline-flex;
-              align-items: center;
-              padding: 8px 12px;
-              border-radius: 6px;
-              background: #334155;
-              color: #fff;
-              text-decoration: none;
-            }
-            .login-panel {
-              max-width: 420px;
-              padding: 24px;
-              background: #fff;
-              border: 1px solid #dde6f0;
-              border-radius: 8px;
-            }
-            .login-panel form {
-              display: grid;
-              gap: 10px;
-            }
-            .login-panel input,
-            .login-panel button {
-              width: 100%;
-              box-sizing: border-box;
-            }
-            table {
-              width: 100%;
-              border-collapse: collapse;
-              background: #fff;
-              border: 1px solid #dde6f0;
-            }
-            th,
-            td {
-              padding: 12px;
-              border-bottom: 1px solid #edf2f7;
-              text-align: left;
-              vertical-align: top;
-            }
-            th {
-              background: #f8fafc;
-              font-weight: 700;
-            }
-            small {
-              display: block;
-              margin-top: 6px;
-              color: #64748b;
-            }
-            form {
-              display: flex;
-              gap: 8px;
-              flex-wrap: wrap;
-            }
-            input {
-              min-width: 220px;
-              height: 34px;
-              padding: 0 10px;
-              border: 1px solid #cbd5e1;
-              border-radius: 6px;
-            }
-            button {
-              height: 36px;
-              padding: 0 12px;
-              border: 0;
-              border-radius: 6px;
-              background: #1874cd;
-              color: #fff;
-              cursor: pointer;
-            }
-            button.secondary {
-              background: #64748b;
-            }
-            .status {
-              display: inline-block;
-              padding: 4px 8px;
-              border-radius: 999px;
-              font-size: 12px;
-            }
-            .status.protected {
-              background: #fee2e2;
-              color: #991b1b;
-            }
-            .status.public {
-              background: #dcfce7;
-              color: #166534;
-            }
-            code,
-            pre {
-              background: #e2e8f0;
-              border-radius: 6px;
-            }
-            code {
-              padding: 2px 4px;
-            }
-            pre {
-              padding: 12px;
-              overflow-x: auto;
-            }
-          </style>
-        </head>
-        <body>
-          <header><h1>#{escape(title)}</h1></header>
-          <main>#{body}</main>
-        </body>
-        </html>
-      HTML
-    end
-
-    def escape(value)
-      CGI.escapeHTML(utf8(value))
+    def utf8(value)
+      ProtectionStore.utf8(value)
     end
   end
 end

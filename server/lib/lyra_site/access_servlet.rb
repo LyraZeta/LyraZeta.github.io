@@ -11,6 +11,7 @@ module LyraSite
       super(server)
       @protection_store = options.fetch(:protection_store)
       @access_session = options.fetch(:access_session)
+      @client_address = options.fetch(:client_address)
     end
 
     def do_POST(request, response)
@@ -18,8 +19,8 @@ module LyraSite
       password = ProtectionStore.utf8(request.query["password"])
       entry = @protection_store.find(url)
 
-      if entry && @protection_store.valid_password?(url, password)
-        @access_session.grant(response, url)
+      if entry && PasswordHasher.verify?(password, entry.fetch("password_hash"))
+        @access_session.grant(response, url, version: entry.fetch("password_hash"), secure: @client_address.secure?(request))
         response.set_redirect(WEBrick::HTTPStatus::SeeOther, url)
       else
         ProtectedPage.render(

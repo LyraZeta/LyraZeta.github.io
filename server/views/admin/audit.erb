@@ -1,0 +1,10 @@
+<table class="data-table audit-table">
+  <thead><tr><th>时间</th><th>操作</th><th>管理员 / IP</th><th>对象</th></tr></thead>
+  <tbody>
+  <% @result[:rows].each do |row| %>
+    <tr><td data-label="时间" class="nowrap"><%= timestamp(row['occurred_at']) %></td><td data-label="操作"><span class="status <%= row['action'] == 'login_failed' ? 'danger' : 'neutral' %>"><%= e(ACTIONS.fetch(row['action'], row['action'])) %></span></td><td data-label="管理员 / IP"><%= e(row['actor']) %><small class="mono"><%= e(row['ip']) %></small></td><td data-label="对象" class="path"><%= row['target'].empty? ? '/' : e(row['target']) %></td></tr>
+  <% end %>
+  <% if @result[:rows].empty? %><tr><td colspan="4" class="empty">暂无操作记录</td></tr><% end %>
+  </tbody>
+</table>
+<%= pagination(@result, '/admin/audit') %>

@@ -9,6 +9,7 @@ module LyraSite
     def initialize(server, options = {})
       super(server)
       @repository = options.fetch(:repository)
+      @protection_store = options.fetch(:protection_store)
     end
 
     def do_GET(request, response)
@@ -43,6 +44,14 @@ module LyraSite
       posts = filtered_posts(request.query["tag"])
       total_count = posts.length
       posts = posts.first(limit) unless limit.nil?
+      protected_urls = @protection_store.all.map { |entry| entry.fetch("url") }
+      posts = posts.map do |post|
+        if protected_urls.include?(ProtectionStore.canonical_url(post.fetch(:url)))
+          post.merge(protected: true, excerpt: nil, description: nil).reject { |key, _| key == :source_path }
+        else
+          post.merge(protected: false)
+        end
+      end
 
       json(response, { count: total_count, posts: posts })
     end

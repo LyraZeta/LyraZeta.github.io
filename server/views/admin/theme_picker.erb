@@ -1,0 +1,9 @@
+<fieldset class="theme-picker">
+  <legend class="sr-only">外观</legend>
+  <% [['system', '跟随系统', 'monitor'], ['light', '日间模式', 'sun'], ['dark', '夜间模式', 'moon']].each do |value, label, symbol| %>
+    <label class="theme-option" data-tooltip="<%= label %>">
+      <input class="sr-only" type="radio" name="admin-theme" value="<%= value %>" aria-label="<%= label %>" <%= value == 'system' ? 'checked' : '' %>>
+      <svg class="icon" aria-hidden="true"><use href="/admin/assets/icons.svg?v=<%= @asset_version %>#<%= symbol %>"></use></svg>
+    </label>
+  <% end %>
+</fieldset>

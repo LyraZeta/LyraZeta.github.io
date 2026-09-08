@@ -3,6 +3,8 @@
 require "fileutils"
 require "pathname"
 require "time"
+require "tempfile"
+require "thread"
 require "uri"
 require "yaml"
 
@@ -10,6 +12,8 @@ require_relative "password_hasher"
 
 module LyraSite
   class ProtectionStore
+    class InvalidConfiguration < StandardError; end
+
     DEFAULT_DATA = { "posts" => [] }.freeze
 
     def self.utf8(value)
@@ -34,11 +38,14 @@ module LyraSite
 
     def initialize(path:)
       @path = Pathname(path).expand_path
+      @mutex = Mutex.new
       FileUtils.mkdir_p(@path.dirname)
     end
 
     def all
-      read_data.fetch("posts", []).filter_map { |entry| normalize_entry(entry) }
+      read_data.fetch("posts").map do |entry|
+        normalize_entry(entry) || raise(InvalidConfiguration, "invalid_protection_entry")
+      end
     end
 
     def find(url)
@@ -62,8 +69,7 @@ module LyraSite
       normalized_password = password.to_s
       raise ArgumentError, "password_required" if normalized_password.empty?
 
-      posts = all.reject { |entry| entry.fetch("url") == canonical }
-      posts << {
+      entry = {
         "url" => canonical,
         "title" => self.class.utf8(title),
         "source_path" => self.class.utf8(source_path),
@@ -71,12 +77,18 @@ module LyraSite
         "updated_at" => Time.now.utc.iso8601
       }
 
-      write_data("posts" => posts.sort_by { |entry| entry.fetch("url") })
+      @mutex.synchronize do
+        posts = all.reject { |item| item.fetch("url") == canonical }
+        posts << entry
+        write_data("posts" => posts.sort_by { |item| item.fetch("url") })
+      end
     end
 
     def unprotect(url)
       canonical = self.class.canonical_url(url)
-      write_data("posts" => all.reject { |entry| entry.fetch("url") == canonical })
+      @mutex.synchronize do
+        write_data("posts" => all.reject { |entry| entry.fetch("url") == canonical })
+      end
     end
 
     private
@@ -85,17 +97,20 @@ module LyraSite
       return DEFAULT_DATA.dup unless @path.file?
 
       data = YAML.safe_load(@path.read(encoding: "UTF-8"), aliases: false) || {}
-      posts = data.fetch("posts", [])
-      { "posts" => posts.is_a?(Array) ? posts : [] }
-    rescue Psych::SyntaxError => error
-      warn "Invalid protection config #{@path}: #{error.message}"
-      DEFAULT_DATA.dup
+      unless data.is_a?(Hash) && data["posts"].is_a?(Array)
+        raise InvalidConfiguration, "invalid_protection_config"
+      end
+
+      data
     end
 
     def write_data(data)
-      tmp_path = @path.sub_ext(".tmp")
-      File.write(tmp_path, YAML.dump(data), mode: "w:UTF-8")
-      FileUtils.mv(tmp_path, @path)
+      Tempfile.create(["protected_posts", ".tmp"], @path.dirname, encoding: "UTF-8") do |file|
+        file.write(YAML.dump(data))
+        file.flush
+        file.fsync
+        File.rename(file.path, @path)
+      end
     end
 
     def normalize_entry(entry)

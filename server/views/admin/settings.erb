@@ -1,0 +1,18 @@
+<section class="settings-section">
+  <div><h2>访问记录</h2><p class="muted">日志保留策略</p></div>
+  <form method="post" action="/admin/settings" class="settings-form">
+    <%= csrf_field %>
+    <label class="toggle-row" for="enabled"><span>记录访客访问</span><input type="checkbox" role="switch" id="enabled" name="enabled" value="1" <%= @settings['enabled'] == '1' ? 'checked' : '' %>></label>
+    <div class="field"><label for="retention">访问及审计日志保留天数</label><div class="number-field"><input id="retention" name="retention_days" type="number" min="1" max="365" value="<%= e(@settings['retention_days']) %>" required><span>天</span></div></div>
+    <button class="button primary" type="submit"><%= icon('check') %>保存设置</button>
+  </form>
+</section>
+<section class="settings-section">
+  <div><h2>数据清理</h2><p class="muted">仅清空访问记录，保留操作审计</p></div>
+  <form method="post" action="/admin/visits/clear" class="settings-form">
+    <%= csrf_field %>
+    <p class="danger-text">清空后无法恢复。</p>
+    <div class="field"><label for="confirmation">输入 DELETE 确认</label><input id="confirmation" name="confirmation" autocomplete="off" pattern="DELETE" required></div>
+    <button class="button danger-outline" type="submit"><%= icon('trash-2') %>清空访问日志</button>
+  </form>
+</section>

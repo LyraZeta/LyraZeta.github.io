@@ -1,0 +1,29 @@
+<form action="/admin/visits" method="get" class="filters visit-filters">
+  <div class="field"><label for="ip">访客 IP</label><input id="ip" name="ip" value="<%= e(@filters['ip']) %>" placeholder="IPv4 / IPv6" type="search"></div>
+  <div class="field"><label for="path">访问路径</label><input id="path" name="path" value="<%= e(@filters['path']) %>" placeholder="/2026/" type="search"></div>
+  <div class="field"><label for="from">开始日期</label><input id="from" name="from" type="date" value="<%= e(@filters['from']) %>"></div>
+  <div class="field"><label for="to">结束日期</label><input id="to" name="to" type="date" value="<%= e(@filters['to']) %>"></div>
+  <div class="field"><label for="status">响应状态</label><select id="status" name="status"><option value="">全部状态</option value="2" <%= selected(@filters['status'], '2') %>>2xx 成功</option><option value="3" <%= selected(@filters['status'], '3') %>>3xx 重定向</option><option value="4" <%= selected(@filters['status'], '4') %>>4xx 请求错误</option><option value="5" <%= selected(@filters['status'], '5') %>>5xx 服务错误</option></select></div>
+  <div class="field"><label for="bot">客户端类型</label><select id="bot" name="bot"><option value="">全部客户端</option value="0" <%= selected(@filters['bot'], '0') %>>其他客户端</option><option value="1" <%= selected(@filters['bot'], '1') %>>疑似爬虫</option></select></div>
+  <div class="filter-actions"><button class="button primary"><%= icon('search') %>查询</button><a class="icon-button" href="/admin/visits" title="重置筛选" aria-label="重置筛选"><%= icon('rotate-ccw') %></a></div>
+</form>
+<div class="section-heading"><h2>请求明细 <span class="count"><%= number(@result[:total]) %></span></h2><a class="button" href="<%= link_to('/admin/visits.csv', 'page' => nil) %>" download><%= icon('download') %>导出 CSV</a></div>
+<% if @result[:total] > ActivityStore::EXPORT_LIMIT %><p class="muted">单次导出最近 10,000 条，请缩小筛选范围以导出其余记录。</p><% end %>
+<table class="data-table visits-table">
+  <thead><tr><th>时间</th><th>访客 IP</th><th>页面 / 来源</th><th>状态</th><th>耗时</th></tr></thead>
+  <tbody>
+  <% @result[:rows].each do |row| %>
+    <tr>
+      <td data-label="时间" class="nowrap"><time datetime="<%= Time.at(row['occurred_at']).utc.iso8601 %>"><%= timestamp(row['occurred_at']) %></time></td>
+      <td data-label="访客 IP">
+        <a class="mono ip-address" href="<%= link_to('/admin/visits', 'ip' => row['ip'], 'page' => nil) %>"><%= e(row['ip']) %></a>
+        <small><%= row['bot'] == 1 ? '疑似爬虫' : '其他客户端' %></small>
+      </td>
+      <td data-label="页面 / 来源"><span class="path"><%= e(row['path']) %></span><details class="request-details"><summary>请求详情</summary><dl><dt>来源</dt><dd><%= row['referrer'].empty? ? '无来源信息' : e(row['referrer']) %></dd><dt>User-Agent</dt><dd><%= row['user_agent'].empty? ? '未提供' : e(row['user_agent']) %></dd></dl></details></td>
+      <td data-label="状态"><%= status(row['status']) %></td><td data-label="耗时" class="nowrap mono"><%= number(row['duration_ms']) %> ms</td>
+    </tr>
+  <% end %>
+  <% if @result[:rows].empty? %><tr><td colspan="5" class="empty"><%= icon('globe') %><p>没有符合条件的访问记录</p></td></tr><% end %>
+  </tbody>
+</table>
+<%= pagination(@result, '/admin/visits') %>

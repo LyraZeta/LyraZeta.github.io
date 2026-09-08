@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<% @asset_version = '20260908-theme-v2' %>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title><%= e(@title) %> | LyraZeta</title>
+  <script src="/admin/assets/admin.js?v=<%= @asset_version %>"></script>
+  <link rel="stylesheet" href="/admin/assets/admin.css?v=<%= @asset_version %>">
+  <link rel="icon" href="/favicon.ico">
+</head>
+<body class="<%= %w[login error].include?(@view) ? 'auth-page' : 'workspace' %>">
+<a class="skip-link" href="#main">跳转到正文</a>
+<% if %w[login error].include?(@view) %>
+  <header class="auth-toolbar"><%= template('theme_picker') %></header>
+  <main id="main" class="auth-main"><%= @content %></main>
+<% else %>
+  <aside class="sidebar">
+    <a class="brand" href="/admin"><span class="brand-mark">LZ</span><span>LyraZeta<small>网站管理</small></span></a>
+    <nav aria-label="后台导航">
+      <% NAVIGATION.each do |key, path, label, symbol| %>
+        <a href="<%= path %>" <%= key == @view ? 'aria-current="page"' : '' %>><%= icon(symbol) %><span><%= label %></span></a>
+      <% end %>
+    </nav>
+    <div class="sidebar-footer">
+      <a href="/" target="_blank" rel="noopener"><%= icon('external-link') %>查看网站</a>
+      <div class="server-state"><span class="state-dot"></span>动态站点<span class="muted">运行中</span></div>
+    </div>
+  </aside>
+  <div class="workspace-main">
+    <header class="topbar"><span>控制台 <span class="muted">/</span> <%= e(@title) %></span><div class="account"><%= template('theme_picker') %><span><%= e(@username) %></span><form action="/admin/logout" method="post"><%= csrf_field %><button class="icon-button" title="退出登录" aria-label="退出登录"><%= icon('log-out') %></button></form></div></header>
+    <main id="main" class="main-content">
+      <div class="page-heading"><h1><%= e(@title) %></h1><div class="page-date"><time><%= Time.now.getlocal(ActivityStore::TIME_OFFSET).strftime('%Y-%m-%d') %></time><span class="timezone">UTC+08:00</span></div></div>
+      <% if @notice %><div class="notice" role="status"><%= icon('check') %><%= e(@notice) %></div><% end %>
+      <% if @settings['enabled'] != '1' %><div class="notice warning" role="status">访问记录已暂停。</div><% end %>
+      <%= @content %>
+    </main>
+  </div>
+<% end %>
+</body>
+</html>

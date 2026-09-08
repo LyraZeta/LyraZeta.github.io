@@ -1,0 +1,39 @@
+<div class="section-heading"><h2>站点数据</h2><form method="get" action="/admin" class="inline-form"><label class="sr-only" for="days">统计周期</label><select id="days" name="days"><% [7, 30, 90].each do |days| %><option value="<%= days %>" <%= selected(@overview[:days], days) %>>最近 <%= days %> 天</option><% end %></select><button class="icon-button" title="更新统计" aria-label="更新统计"><%= icon('refresh-cw') %></button></form></div>
+<dl class="metrics">
+  <div><dt><%= icon('chart-no-axes-combined') %>页面请求</dt><dd><%= number(@overview[:summary]['views']) %></dd><span>含爬虫及失败请求</span></div>
+  <div><dt><%= icon('globe') %>独立 IP</dt><dd><%= number(@overview[:summary]['unique_ips']) %></dd><span>按 IP 去重</span></div>
+  <div><dt><%= icon('shield-check') %>失败请求</dt><dd><%= number(@overview[:summary]['errors']) %></dd><span>HTTP 4xx / 5xx</span></div>
+  <div><dt><%= icon('files') %>文章</dt><dd><%= number(@post_count) %><small>篇</small></dd><span><%= @protected_count %> 篇已设置访问保护</span></div>
+</dl>
+<section class="trend-section">
+  <div class="section-heading"><h2>访问趋势</h2><span class="legend"><span class="state-dot"></span>页面请求<span class="muted">疑似爬虫 <%= number(@overview[:summary]['bots']) %></span></span></div>
+  <% if @overview[:summary]['views'].zero? %>
+    <div class="empty chart-empty"><%= icon('chart-no-axes-combined') %><p>此时间段暂无访问记录</p></div>
+  <% else %>
+    <% maximum = [@overview[:trend].map { |row| row['views'] }.max, 1].max; step = 900.0 / @overview[:trend].length %>
+    <div class="chart" role="img" aria-label="最近 <%= @overview[:days] %> 天的页面请求趋势，最高每日 <%= maximum %> 次">
+      <div class="chart-scale"><span><%= number(maximum) %></span><span><%= number(maximum / 2) %></span><span>0</span></div>
+      <svg viewBox="0 0 900 180" preserveAspectRatio="none" aria-hidden="true">
+        <path class="chart-grid" d="M0 1H900 M0 90H900 M0 179H900"/>
+        <% @overview[:trend].each_with_index do |row, i| %>
+          <% height = row['views'] * 168.0 / maximum %>
+          <rect class="chart-bar" x="<%= (i * step + step * 0.2).round(2) %>" y="<%= (179 - height).round(2) %>" width="<%= (step * 0.6).round(2) %>" height="<%= height.round(2) %>" rx="2"><title><%= row['day'] %>：<%= row['views'] %> 次</title></rect>
+        <% end %>
+      </svg>
+    </div>
+    <div class="chart-dates"><span><%= @overview[:trend].first['day'] %></span><span><%= @overview[:trend].last['day'] %></span></div>
+    <details class="trend-data"><summary>每日数据</summary><div class="daily-values"><% @overview[:trend].each do |row| %><span><%= row['day'] %><strong><%= number(row['views']) %></strong></span><% end %></div></details>
+  <% end %>
+</section>
+<div class="overview-columns">
+  <section><div class="section-heading"><h2>热门页面</h2><a class="text-link" href="/admin/visits">全部日志<%= icon('arrow-right') %></a></div>
+    <% if @overview[:top_pages].empty? %><div class="empty">暂无页面数据</div><% else %>
+      <ol class="ranking"><% @overview[:top_pages].each do |row| %><li><a href="<%= link_to('/admin/visits', 'path' => row['path']) %>"><%= e(row['path']) %><small><%= number(row['unique_ips']) %> 个独立 IP</small></a><strong><%= number(row['views']) %></strong></li><% end %></ol>
+    <% end %>
+  </section>
+  <section><div class="section-heading"><h2>最近访问</h2><span class="muted">最近 6 条</span></div>
+    <% if @overview[:recent].empty? %><div class="empty">暂无访问记录</div><% else %>
+      <ul class="recent-list"><% @overview[:recent].each do |row| %><li><div><a class="mono" href="<%= link_to('/admin/visits', 'ip' => row['ip']) %>"><%= e(row['ip']) %></a><small><%= e(row['path']) %></small></div><div class="recent-meta"><%= status(row['status']) %><time><%= timestamp(row['occurred_at']) %></time></div></li><% end %></ul>
+    <% end %>
+  </section>
+</div>

@@ -1,0 +1,16 @@
+<a class="brand auth-brand" href="/"><span class="brand-mark">LZ</span><span>LyraZeta<small>网站管理</small></span></a>
+<section class="auth-panel">
+  <div class="auth-icon"><%= icon('shield-check') %></div>
+  <h1>登录控制台</h1>
+  <% if @notice %><div class="notice" role="status"><%= e(@notice) %></div><% end %>
+  <% if @error %><div class="notice danger" role="alert"><%= e(@error) %></div><% end %>
+  <form action="/admin/login" method="post" class="stack-form">
+    <%= csrf_field %>
+    <label for="username">用户名</label>
+    <input id="username" name="username" autocomplete="username" required>
+    <label for="password">密码</label>
+    <div class="password-field"><input id="password" name="password" type="password" autocomplete="current-password" required><button type="button" class="icon-button" data-password="password" aria-label="显示密码" title="显示密码" aria-pressed="false"><%= icon('eye') %></button></div>
+    <button class="button primary" type="submit">登录<%= icon('arrow-right') %></button>
+  </form>
+</section>
+<a class="auth-back" href="/"><%= icon('arrow-left') %>返回网站</a>
