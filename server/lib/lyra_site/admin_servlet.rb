@@ -153,7 +153,7 @@ module LyraSite
     end
 
     def posts_page(request, response)
-      filters = request.query.slice("q", "state", "page").transform_values { |value| utf8(value) }
+      filters = post_filters(request)
       protections = @protection_store.all.to_h { |entry| [entry.fetch("url"), entry] }
       posts = @repository.all
       edit = posts.find { |post| post[:url] == utf8(request.query["edit"]) }
@@ -161,16 +161,44 @@ module LyraSite
       posts = posts.select { |post| [post[:title], post[:category], post[:url], *post[:tags]].join(" ").downcase.include?(query) }
       posts = posts.select { |post| protections.key?(post[:url]) } if filters["state"] == "protected"
       posts = posts.reject { |post| protections.key?(post[:url]) } if filters["state"] == "public"
+      collections = post_collections(posts, protections)
+      collection_name = nil
+      if filters.key?("tag")
+        collection_name = filters["tag"]
+        posts = posts.select { |post| post[:tags].include?(collection_name) }
+      elsif filters["untagged"] == "1"
+        collection_name = "未标记"
+        posts = posts.select { |post| post[:tags].empty? }
+      end
       total = posts.length
       pages = [(total.to_f / ActivityStore::PAGE_SIZE).ceil, 1].max
       page = [[filters["page"].to_i, 1].max, pages].min
+      filters["page"] = page.to_s if filters.key?("page")
       render(response, "posts", request: request, filters: filters, protections: protections, edit: edit,
+             collections: collections, collection_name: collection_name,
              result: { rows: posts.slice((page - 1) * ActivityStore::PAGE_SIZE, ActivityStore::PAGE_SIZE) || [], total: total, page: page, pages: pages })
+    end
+
+    def post_filters(request)
+      filters = request.query.slice("q", "state", "page", "tag", "untagged")
+                       .transform_values { |value| utf8(value) }.reject { |_, value| value.empty? }
+      filters.delete("state") unless %w[public protected].include?(filters["state"])
+      filters.delete("untagged") if filters.key?("tag") || filters["untagged"] != "1"
+      filters
     end
 
 
 
-
+    def post_collections(posts, protections)
+      groups = posts.each_with_object({}) do |post, result|
+        tags = post[:tags].empty? ? [nil] : post[:tags].uniq
+        tags.each { |tag| (result[tag] ||= []) << post }
+      end
+      groups.sort_by { |tag, rows| [tag.nil? ? 1 : 0, -rows.length, tag.to_s] }.map do |tag, rows|
+        { tag: tag, title: tag || "未标记", total: rows.length,
+          protected_count: rows.count { |post| protections.key?(post[:url]) }, latest: rows.first }
+      end
+    end
 
     def update_protection(request, response)
       url = ProtectionStore.canonical_url(request.query["url"])
@@ -181,11 +209,11 @@ module LyraSite
       when "protect"
         @protection_store.protect(url: post[:url], title: post[:title], source_path: post[:source_path], password: utf8(request.query["password"]))
         audit(request, "protect", post[:url])
-        redirect(response, "/admin/posts?notice=protected")
+        redirect(response, "/admin/posts?#{URI.encode_www_form(post_filters(request).merge('notice' => 'protected'))}")
       when "unprotect"
         @protection_store.unprotect(url)
         audit(request, "unprotect", post[:url])
-        redirect(response, "/admin/posts?notice=public")
+        redirect(response, "/admin/posts?#{URI.encode_www_form(post_filters(request).merge('notice' => 'public'))}")
       else
         error(response, 400, "未知的文章操作。")
       end

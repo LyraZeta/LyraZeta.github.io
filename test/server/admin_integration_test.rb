@@ -4,6 +4,7 @@ require "cgi"
 require "fileutils"
 require "minitest/autorun"
 require "net/http"
+require "nokogiri"
 require "stringio"
 require "timeout"
 require "tmpdir"
@@ -166,11 +167,115 @@ class AdminIntegrationTest < Minitest::Test
     assert_equal "404", request("/server/data/activity.sqlite3").code
   end
 
+  def write_tagged_post(slug, title:, tags:)
+    metadata = { "title" => title, "tags" => tags }
+    File.write(File.join(@dir, "_posts/2026-09-02-#{slug}.md"), "#{metadata.to_yaml}---\nPost content\n")
+  end
 
+  def posts_document(filters = {})
+    res = request("/admin/posts?#{URI.encode_www_form(filters)}")
+    assert_equal "200", res.code, @log.string
+    Nokogiri::HTML(res.body)
+  end
 
+  def test_posts_default_to_tag_collections_with_unique_counts
+    write_tagged_post("alpha", title: "Alpha", tags: ["Course", "Course", "光学 & 设计"])
+    write_tagged_post("beta", title: "Beta", tags: ["Course2"])
+    write_tagged_post("gamma", title: "Gamma", tags: ["Course"])
+    token = login
+    request("/admin/protections", form: { csrf_token: token, action: "protect", url: "/2026/09/alpha/", password: "test" })
+    doc = posts_document
+    assert_empty doc.css(".posts-table")
+    assert_equal ["Course", "Course2", "光学 & 设计", "未标记"], doc.css(".collection-title h3").map(&:text)
+    assert_includes doc.at_css("#collections-heading").parent.text, "4 个集合 · 4 篇文章"
+    course = doc.at_css(".post-collection")
+    assert_equal "2", course.at_css(".collection-count strong").text
+    assert_equal ["1 公开", "1 已保护"], course.css(".collection-states > span").map(&:text)
+    assert_equal "Gamma", course.at_css(".collection-latest p").text
 
+    doc = posts_document("tag" => "Course")
+    assert_equal ["Gamma", "Alpha"], doc.css(".posts-table strong").map(&:text)
+    doc = posts_document("tag" => "光学 & 设计")
+    assert_equal ["Alpha"], doc.css(".posts-table strong").map(&:text)
+    doc = posts_document("untagged" => "1")
+    assert_equal ["Test Article"], doc.css(".posts-table strong").map(&:text)
+  end
 
+  def test_collection_filters_apply_before_counts_and_preserve_tag_scope
+    write_tagged_post("alpha", title: "Alpha", tags: ["Course", "光学"])
+    write_tagged_post("beta", title: "Beta", tags: ["Course"])
+    token = login
+    request("/admin/protections", form: { csrf_token: token, action: "protect", url: "/2026/09/alpha/", password: "test" })
+    doc = posts_document("state" => "protected", "q" => "Alpha")
+    assert_equal ["Course", "光学"], doc.css(".collection-title h3").map(&:text)
+    assert_includes doc.at_css("#collections-heading").parent.text, "2 个集合 · 1 篇文章"
+    doc.css(".post-collection").each do |link|
+      filters = URI.decode_www_form(URI.parse(link["href"]).query).to_h
+      assert_equal "protected", filters["state"]
+      assert_equal "Alpha", filters["q"]
+      assert_equal "1", link.at_css(".collection-count strong").text
+    end
+    doc = posts_document("tag" => "Course", "state" => "public")
+    assert_equal ["Beta"], doc.css(".posts-table strong").map(&:text)
+    assert_equal "Course", doc.at_css('.post-filters input[name="tag"]')["value"]
+    reset = doc.at_css('a[title="重置筛选"]')["href"]
+    assert_equal({ "tag" => "Course" }, URI.decode_www_form(URI.parse(reset).query).to_h)
+    doc = posts_document("tag" => "Course", "q" => "missing")
+    assert_includes doc.at_css(".empty").text, "没有符合条件的文章"
+    assert_equal "Course", doc.at_css("#collection-heading").text
+    doc = posts_document("q" => "missing")
+    assert_empty doc.css(".post-collection")
+    assert_includes doc.at_css(".empty").text, "没有符合条件的文章"
+  end
 
+  def test_collection_pagination_and_protection_actions_keep_context
+    31.times { |index| write_tagged_post("post-#{index}", title: format("分页 %02d", index), tags: ["光学 & 设计"]) }
+    token = login
+    filters = { "tag" => "光学 & 设计", "q" => "分页", "state" => "public" }
+    doc = posts_document(filters)
+    assert_equal 30, doc.css(".posts-table strong").length
+    following = doc.at_css('.pagination a[aria-label="下一页"]')["href"]
+    assert_equal filters.merge("page" => "2"), URI.decode_www_form(URI.parse(following).query).to_h
+    doc = posts_document(filters.merge("page" => "999"))
+    assert_equal ["分页 00"], doc.css(".posts-table strong").map(&:text)
+    edit = doc.at_css('a[title="管理访问密码"]')["href"]
+    edit_filters = URI.decode_www_form(URI.parse(edit).query).to_h
+    assert_equal filters.merge("page" => "2", "edit" => "/2026/09/post-0/"), edit_filters
+    doc = posts_document(edit_filters)
+    hidden = doc.css('.edit-form input[type="hidden"]').to_h { |input| [input["name"], input["value"]] }
+    assert_equal filters.merge("page" => "2"), hidden.slice(*filters.keys, "page")
+    res = request("/admin/protections", form: hidden.merge("action" => "protect", "password" => "test", "return_to" => "https://example.test/"))
+    assert_equal "303", res.code
+    location = URI.parse(res["Location"])
+    assert_equal "/admin/posts", location.path
+    assert_equal filters.merge("page" => "2", "notice" => "protected"), URI.decode_www_form(location.query).to_h
+    doc = posts_document(filters.merge("page" => "2"))
+    assert_equal 30, doc.css(".posts-table strong").length
+    assert_includes doc.at_css(".pagination").text, "1 / 1"
+    res = request("/admin/protections", form: hidden.merge("action" => "unprotect", "csrf_token" => token))
+    assert_equal "303", res.code
+    assert_equal filters.merge("page" => "2", "notice" => "public"), URI.decode_www_form(URI.parse(res["Location"]).query).to_h
+  end
+
+  def test_tag_names_are_escaped_and_do_not_collide_with_untagged
+    tag = '<script>alert("tag")</script> & 光学'
+    write_tagged_post("special", title: "Special", tags: [tag, "未标记"])
+    login
+    doc = posts_document
+    assert_equal 3, doc.css(".post-collection").length
+    assert_empty doc.css(".post-collections script")
+    link = doc.css(".post-collection").find { |node| node.at_css("h3").text == tag }
+    assert_equal tag, URI.decode_www_form(URI.parse(link["href"]).query).to_h["tag"]
+    doc = posts_document("tag" => tag, "untagged" => "1")
+    assert_equal tag, doc.at_css("#collection-heading").text
+    assert_empty doc.css("#collection-heading script")
+    assert_equal ["Special"], doc.css(".posts-table strong").map(&:text)
+    assert_equal ["Special"], posts_document("tag" => "未标记").css(".posts-table strong").map(&:text)
+    assert_equal ["Test Article"], posts_document("untagged" => "1").css(".posts-table strong").map(&:text)
+    doc = posts_document("tag" => "unknown")
+    assert_equal "unknown", doc.at_css("#collection-heading").text
+    assert_empty doc.css(".posts-table strong")
+  end
 
   def test_protected_posts_are_not_leaked_through_feed_api_or_listing_ranges
     html = '<!doctype html><html><head><title>Home</title></head><body><ol class="post-list"><li><article><h2 class="post-title"><a href="/2026/09/test/">Test</a></h2><p class="excerpt">PRIVATE CONTENT</p></article></li></ol></body></html>'

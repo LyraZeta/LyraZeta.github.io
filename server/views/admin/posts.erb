@@ -1,26 +1,56 @@
+<% if @collection_name %>
+  <nav class="collection-breadcrumb" aria-label="文章集合导航">
+    <a class="text-link" href="<%= link_to('/admin/posts', 'tag' => nil, 'untagged' => nil, 'page' => nil) %>"><%= icon('arrow-left') %>标签集合</a>
+    <%= icon('chevron-right') %><span aria-current="page"><%= e(@collection_name) %></span>
+  </nav>
+<% end %>
 <% if @edit %>
   <section class="edit-panel" aria-labelledby="edit-heading">
     <div class="section-heading"><h2 id="edit-heading"><%= icon('lock-keyhole') %><%= e(@edit[:title]) %></h2><a class="icon-button" href="<%= link_to('/admin/posts') %>" title="关闭编辑" aria-label="关闭编辑"><%= icon('x') %></a></div>
     <form method="post" action="/admin/protections" class="edit-form">
       <%= csrf_field %><input type="hidden" name="url" value="<%= e(@edit[:url]) %>">
+      <% @filters.each do |key, value| %><input type="hidden" name="<%= e(key) %>" value="<%= e(value) %>"><% end %>
       <label for="post-password">访问密码</label><div class="password-field"><input id="post-password" name="password" type="password" autocomplete="new-password" required><button type="button" class="icon-button" data-password="post-password" aria-label="显示密码" title="显示密码" aria-pressed="false"><%= icon('eye') %></button></div>
       <div class="form-actions"><button class="button primary" name="action" value="protect"><%= icon('check') %>保存密码</button><% if @protections.key?(@edit[:url]) %><button class="button danger-outline" name="action" value="unprotect" formnovalidate data-confirm="确定取消这篇文章的访问保护？"><%= icon('lock-keyhole-open') %>取消保护</button><% end %></div>
     </form>
   </section>
 <% end %>
 <form action="/admin/posts" method="get" class="filters post-filters">
+  <% @filters.slice('tag', 'untagged').each do |key, value| %><input type="hidden" name="<%= e(key) %>" value="<%= e(value) %>"><% end %>
   <div class="field search-field"><label for="q">搜索文章</label><input id="q" type="search" name="q" value="<%= e(@filters['q']) %>" placeholder="标题、标签或路径"></div>
-  <div class="field"><label for="state">访问状态</label><select id="state" name="state"><option value="">全部文章</option><option value="public" <%= selected(@filters['state'], 'public') %>>公开</option><option value="protected" <%= selected(@filters['state'], 'protected') %>>已保护</option></select></div>
-  <button class="button primary"><%= icon('search') %>查询</button><a class="icon-button" href="/admin/posts" title="重置筛选" aria-label="重置筛选"><%= icon('rotate-ccw') %></a>
+  <div class="field"><label for="state">访问状态</label><select id="state" name="state"><option value="">全部状态</option><option value="public" <%= selected(@filters['state'], 'public') %>>公开</option><option value="protected" <%= selected(@filters['state'], 'protected') %>>已保护</option></select></div>
+  <button class="button primary"><%= icon('search') %>查询</button><a class="icon-button" href="<%= link_to('/admin/posts', 'q' => nil, 'state' => nil, 'page' => nil) %>" title="重置筛选" aria-label="重置筛选"><%= icon('rotate-ccw') %></a>
 </form>
-<table class="data-table posts-table">
-  <thead><tr><th>文章</th><th>发布日期</th><th>访问状态</th><th class="actions-cell">操作</th></tr></thead>
-  <tbody>
-  <% @result[:rows].each do |post| %>
-    <% protected = @protections.key?(post[:url]) %>
-    <tr><td data-label="文章"><strong><%= e(post[:title]) %></strong><small class="path"><%= e(post[:url]) %></small></td><td data-label="发布日期" class="nowrap"><%= e(post[:date]) %></td><td data-label="访问状态"><span class="status <%= protected ? 'protected' : 'success' %>"><%= icon(protected ? 'lock-keyhole' : 'globe') %><%= protected ? '已保护' : '公开' %></span></td><td data-label="操作" class="actions-cell"><div class="row-actions"><a class="icon-button" href="<%= link_to('/admin/posts', 'edit' => post[:url]) %>" aria-label="管理 <%= e(post[:title]) %> 的访问密码" title="管理访问密码"><%= icon('lock-keyhole') %></a><a class="icon-button" href="<%= e(post[:url]) %>" target="_blank" rel="noopener" aria-label="查看 <%= e(post[:title]) %>" title="查看文章"><%= icon('external-link') %></a></div></td></tr>
-  <% end %>
-  <% if @result[:rows].empty? %><tr><td colspan="4" class="empty">没有符合条件的文章</td></tr><% end %>
-  </tbody>
-</table>
-<%= pagination(@result, '/admin/posts') %>
+<% if @collection_name %>
+  <section aria-labelledby="collection-heading">
+    <div class="section-heading"><h2 id="collection-heading"><%= icon('files') %><%= e(@collection_name) %></h2><span class="muted"><%= number(@result[:total]) %> 篇文章</span></div>
+    <table class="data-table posts-table">
+      <thead><tr><th scope="col">文章</th><th scope="col">发布日期</th><th scope="col">访问状态</th><th scope="col" class="actions-cell">操作</th></tr></thead>
+      <tbody>
+      <% @result[:rows].each do |post| %>
+        <% protected = @protections.key?(post[:url]) %>
+        <tr><td data-label="文章"><strong><%= e(post[:title]) %></strong><small class="path"><%= e(post[:url]) %></small></td><td data-label="发布日期" class="nowrap"><%= e(post[:date]) %></td><td data-label="访问状态"><span class="status <%= protected ? 'protected' : 'success' %>"><%= icon(protected ? 'lock-keyhole' : 'globe') %><%= protected ? '已保护' : '公开' %></span></td><td data-label="操作" class="actions-cell"><div class="row-actions"><a class="icon-button" href="<%= link_to('/admin/posts', 'edit' => post[:url]) %>" aria-label="管理 <%= e(post[:title]) %> 的访问密码" title="管理访问密码"><%= icon('lock-keyhole') %></a><a class="icon-button" href="<%= e(post[:url]) %>" target="_blank" rel="noopener" aria-label="查看 <%= e(post[:title]) %>" title="查看文章"><%= icon('external-link') %></a></div></td></tr>
+      <% end %>
+      <% if @result[:rows].empty? %><tr><td colspan="4" class="empty">没有符合条件的文章</td></tr><% end %>
+      </tbody>
+    </table>
+    <%= pagination(@result, '/admin/posts') %>
+  </section>
+<% else %>
+  <section aria-labelledby="collections-heading">
+    <div class="section-heading"><h2 id="collections-heading"><%= icon('files') %>标签集合</h2><span class="muted"><%= number(@collections.length) %> 个集合 · <%= number(@result[:total]) %> 篇文章</span></div>
+    <ul class="post-collections">
+      <% @collections.each do |collection| %>
+        <li>
+          <a class="post-collection" href="<%= link_to('/admin/posts', 'tag' => collection[:tag], 'untagged' => collection[:tag].nil? ? '1' : nil, 'page' => nil) %>">
+            <div class="collection-title"><%= icon('files') %><h3><%= e(collection[:title]) %></h3><%= icon('chevron-right') %></div>
+            <div class="collection-count"><strong><%= number(collection[:total]) %></strong><span>篇文章</span></div>
+            <div class="collection-states"><span><%= icon('globe') %><%= number(collection[:total] - collection[:protected_count]) %> 公开</span><span><%= icon('lock-keyhole') %><%= number(collection[:protected_count]) %> 已保护</span></div>
+            <div class="collection-latest"><span>最新发布 <time datetime="<%= e(collection[:latest][:date]) %>"><%= e(collection[:latest][:date]) %></time></span><p><%= e(collection[:latest][:title]) %></p></div>
+          </a>
+        </li>
+      <% end %>
+    </ul>
+    <% if @collections.empty? %><div class="empty"><%= icon('files') %><p>没有符合条件的文章</p></div><% end %>
+  </section>
+<% end %>
