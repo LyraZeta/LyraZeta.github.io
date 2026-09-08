@@ -158,4 +158,6 @@ bin/build-static
 
 CI 仅在 `dynamic-site` 的 push / pull request 或手动运行时执行后端测试。覆盖可信代理、日志持久化和清理、并发写入、日期及分页、会话过期、CSRF、登录限流、导出转义、文章改密后的旧凭证撤销及中文文章解锁后的直接跳转；文章集合另覆盖多标签去重、未标记、精确标签匹配、特殊字符转义、筛选计数、分页及改密后的上下文保留。白名单测试覆盖旧库升级、持久化、IPv4/IPv6 规范化、重复及非法输入、CSRF 和审计、立即撤销、无 Cookie 访问、中文路径别名、Range/HEAD、代理伪造及错误转发链不放行。
 
+CI 还会构建动态站点，并检查 `_site/` 不包含 `server/`、`admin/`、`deploy/`、`test/` 和 `vendor/`。`ruby/setup-ruby` 的依赖缓存位于 `vendor/bundle/`，必须保留 `_config.yml` 对 `vendor` 的排除，否则 Jekyll 会将依赖包中的站点模板误读为文章，导致构建失败。
+
 图标来自 Lucide 0.468.0，已本地化；许可证见 `server/assets/LUCIDE-LICENSE`。后台不加载第三方统计、字体或脚本，没有动画和自动轮询。

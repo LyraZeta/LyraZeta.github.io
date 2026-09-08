@@ -35,3 +35,4 @@ jobs:
           test ! -e _site/admin
           test ! -e _site/deploy
           test ! -e _site/test
+          test ! -e _site/vendor

@@ -95,3 +95,4 @@ exclude:
     - server
     - test
     - README.md
+    - vendor
