@@ -39,4 +39,16 @@ class ClientAddressTest < Minitest::Test
     assert_raises(IPAddr::InvalidAddressError) { LyraSite::ClientAddress.new(trusted_proxies: "invalid") }
   end
 
+  def test_access_identity_never_uses_a_proxy_fallback_or_forged_hop
+    resolver = LyraSite::ClientAddress.new(trusted_proxies: "127.0.0.1/32,10.0.0.0/8")
+    assert_equal "203.0.113.2", resolver.visitor_ip(request("203.0.113.2", "203.0.113.99"))
+    assert_equal "203.0.113.2", resolver.visitor_ip(request("127.0.0.1", "203.0.113.99, 203.0.113.2, 10.0.1.1"))
+    assert_equal "2001:db8::2", resolver.visitor_ip(request("127.0.0.1", "2001:0db8:0:0::2"))
+    assert_equal "203.0.113.2", resolver.visitor_ip(request("::ffff:203.0.113.2", "203.0.113.99"))
+    [nil, "", "bad, 203.0.113.2", "203.0.113.2,", "203.0.113.2/24", "10.0.1.1", "[::1]", "x" * 2049,
+     (["203.0.113.2"] * 33).join(",")].each do |header|
+      assert_nil resolver.visitor_ip(request("127.0.0.1", header)), header.inspect
+    end
+    assert_nil resolver.visitor_ip(request("invalid", "203.0.113.99"))
+  end
 end

@@ -10,7 +10,11 @@ module LyraSite
   class AdminServlet < WEBrick::HTTPServlet::AbstractServlet
     ASSETS = { "admin.css" => "text/css", "admin.js" => "text/javascript", "icons.svg" => "image/svg+xml" }.freeze
     TITLES = { "overview" => "访问概览", "posts" => "文章管理", "visits" => "访问日志", "audit" => "操作审计", "settings" => "设置", "login" => "后台登录" }.freeze
-    NOTICES = { "protected" => "文章访问密码已更新，旧的解锁凭证已失效。", "public" => "文章已恢复公开访问。", "saved" => "日志设置已保存。", "cleared" => "访问日志已清空。", "logout" => "已退出登录。" }.freeze
+    NOTICES = { "protected" => "文章访问密码已更新，旧的解锁凭证已失效。", "public" => "文章已恢复公开访问。", "saved" => "日志设置已保存。", "cleared" => "访问日志已清空。", "logout" => "已退出登录。",
+                "ip_added" => "IP 已加入白名单。", "ip_removed" => "IP 已移出白名单。" }.freeze
+    ALLOWLIST_ERRORS = { "invalid_ip" => "请输入单个有效的 IPv4 或 IPv6 地址，不支持网段、端口或通配符。",
+                        "invalid_note" => "备注最多 120 字，不能包含换行或控制字符。",
+                        "duplicate_ip" => "该 IP 已在白名单中。", "unknown_ip" => "该 IP 已不在白名单中。" }.freeze
 
     def initialize(server, options = {})
       super(server)
@@ -54,7 +58,7 @@ module LyraSite
       when "/admin/audit"
         render(response, "audit", request: request, result: @activity.audit_events(page: request.query["page"]))
       when "/admin/settings"
-        render(response, "settings", request: request)
+        settings_page(request, response)
       else
         error(response, 404, "未找到后台页面。")
       end
@@ -69,6 +73,7 @@ module LyraSite
       session = authorize(request, response)
       return unless session
       return error(response, 403, "表单已失效，请刷新页面后重试。") unless @sessions.valid_csrf?(session, request.query["csrf_token"])
+      @csrf = session.fetch(:csrf)
 
       case request.path
       when "/admin/logout"
@@ -83,6 +88,8 @@ module LyraSite
         @activity.update_settings(enabled: request.query["enabled"] == "1", retention_days: days)
         audit(request, "settings", "enabled=#{request.query['enabled'] == '1'}; retention_days=#{days.to_i}")
         redirect(response, "/admin/settings?notice=saved")
+      when "/admin/allowlist"
+        update_allowlist(request, response)
       when "/admin/visits/clear"
         return error(response, 400, "请输入 DELETE 确认清空访问日志。") unless request.query["confirmation"] == "DELETE"
 
@@ -187,7 +194,32 @@ module LyraSite
       filters
     end
 
+    def settings_page(request, response, status: 200, allowlist_error: nil, allowlist_form: {})
+      render(response, "settings", request: request, status: status, allowed_ips: @activity.allowed_ips,
+             allowlist_error: allowlist_error, allowlist_form: allowlist_form)
+    end
 
+    def update_allowlist(request, response)
+      case request.query["action"]
+      when "add"
+        ip = @activity.add_allowed_ip(ip: utf8(request.query["ip"]), note: utf8(request.query["note"]))
+        audit(request, "allowlist_add", ip)
+        notice = "ip_added"
+      when "remove"
+        ip = @activity.remove_allowed_ip(utf8(request.query["ip"]))
+        audit(request, "allowlist_remove", ip)
+        notice = "ip_removed"
+      else
+        return error(response, 400, "未知的白名单操作。")
+      end
+      redirect(response, "/admin/settings?notice=#{notice}#ip-allowlist")
+    rescue ArgumentError => exception
+      message = ALLOWLIST_ERRORS[exception.message]
+      raise unless message
+
+      form = request.query["action"] == "add" ? request.query.slice("ip", "note").transform_values { |value| utf8(value) } : {}
+      settings_page(request, response, status: 422, allowlist_error: message, allowlist_form: form)
+    end
 
     def post_collections(posts, protections)
       groups = posts.each_with_object({}) do |post, result|

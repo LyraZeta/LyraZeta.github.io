@@ -6,6 +6,8 @@ require "sqlite3"
 require "thread"
 require "time"
 
+require_relative "client_address"
+
 module LyraSite
   class ActivityStore
     PAGE_SIZE = 30
@@ -25,6 +27,9 @@ module LyraSite
       @db.execute_batch(<<~SQL)
         PRAGMA journal_mode = WAL;
         CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS ip_allowlist (
+          ip TEXT PRIMARY KEY, note TEXT NOT NULL, created_at INTEGER NOT NULL
+        );
         CREATE TABLE IF NOT EXISTS visits (
           id INTEGER PRIMARY KEY, occurred_at INTEGER NOT NULL, ip TEXT NOT NULL,
           path TEXT NOT NULL, status INTEGER NOT NULL, duration_ms INTEGER NOT NULL,
@@ -73,9 +78,39 @@ module LyraSite
       end
     end
 
+    def allowed_ips
+      @mutex.synchronize { @db.execute("SELECT ip, note, created_at FROM ip_allowlist ORDER BY created_at DESC, ip") }
+    end
 
+    def allowed_ip?(value)
+      ip = ClientAddress.normalize_ip(value)
+      return false unless ip
 
+      @mutex.synchronize { !@db.get_first_value("SELECT 1 FROM ip_allowlist WHERE ip = ?", [ip]).nil? }
+    end
 
+    def add_allowed_ip(ip:, note: "")
+      ip = normalize_allowed_ip(ip)
+      note = note.to_s
+      raise ArgumentError, "invalid_note" if note.length > 120 || note.match?(/[[:cntrl:]]/)
+      note = note.strip
+
+      @mutex.synchronize do
+        @db.execute("INSERT INTO ip_allowlist (ip, note, created_at) VALUES (?, ?, ?)", [ip, note, @clock.call.to_i])
+      end
+      ip
+    rescue SQLite3::ConstraintException
+      raise ArgumentError, "duplicate_ip"
+    end
+
+    def remove_allowed_ip(value)
+      ip = normalize_allowed_ip(value)
+      @mutex.synchronize do
+        @db.execute("DELETE FROM ip_allowlist WHERE ip = ?", [ip])
+        raise ArgumentError, "unknown_ip" if @db.changes.zero?
+      end
+      ip
+    end
 
     def audit(actor:, ip:, action:, target: "")
       @mutex.synchronize do
@@ -141,6 +176,12 @@ module LyraSite
 
     private
 
+    def normalize_allowed_ip(value)
+      text = value.to_s
+      raise ArgumentError, "invalid_ip" if text.match?(/[[:cntrl:]]/)
+
+      ClientAddress.normalize_ip(text.strip) || raise(ArgumentError, "invalid_ip")
+    end
 
     def cleanup_if_due!
       cleanup! if @clock.call.to_i - @last_cleanup >= 3600

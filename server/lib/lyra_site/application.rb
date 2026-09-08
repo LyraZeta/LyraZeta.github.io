@@ -46,8 +46,10 @@ module LyraSite
       server.mount("/api", ApiServlet, repository: repository, protection_store: protection)
       server.mount("/admin", AdminServlet, repository: repository, protection_store: protection,
                    activity_store: activity, admin_session: admin, client_address: address)
-      server.mount("/unlock", AccessServlet, protection_store: protection, access_session: access, client_address: address)
-      server.mount("/", ProtectedStaticServlet, static_root: static_root, protection_store: protection, access_session: access)
+      server.mount("/unlock", AccessServlet, protection_store: protection, access_session: access,
+                   client_address: address, activity_store: activity)
+      server.mount("/", ProtectedStaticServlet, static_root: static_root, protection_store: protection,
+                   access_session: access, client_address: address, activity_store: activity)
       server
     end
   end

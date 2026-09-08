@@ -24,7 +24,8 @@ module LyraSite
 
     def self.canonical_url(value)
       raw = utf8(value).strip
-      path = URI.parse(raw).path
+      # Parse Unicode URLs without re-encoding existing percent escapes.
+      path = URI.parse(URI::DEFAULT_PARSER.escape(raw, /[^\x21-\x7E]/)).path
       path = URI::DEFAULT_PARSER.unescape(path)
       path = utf8(path)
       path = "/" if path.empty?

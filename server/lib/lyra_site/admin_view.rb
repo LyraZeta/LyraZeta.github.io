@@ -20,7 +20,8 @@ module LyraSite
     ACTIONS = {
       "login" => "管理员登录", "login_failed" => "登录失败", "logout" => "退出登录",
       "protect" => "设置文章密码", "unprotect" => "取消文章保护", "settings" => "更新日志设置",
-      "clear_visits" => "清空访问日志", "export" => "导出访问日志"
+      "clear_visits" => "清空访问日志", "export" => "导出访问日志",
+      "allowlist_add" => "添加白名单 IP", "allowlist_remove" => "移除白名单 IP"
     }.freeze
 
     def initialize(view:, **data)

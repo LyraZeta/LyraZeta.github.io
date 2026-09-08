@@ -1,0 +1,20 @@
+<section class="allowlist-section" id="ip-allowlist" aria-labelledby="allowlist-heading">
+  <div class="section-heading"><h2 id="allowlist-heading"><%= icon('shield-check') %>访客 IP 白名单</h2><span class="count"><%= number(@allowed_ips.length) %> 个 IP</span></div>
+  <p class="allowlist-warning"><%= icon('lock-keyhole-open') %>同一公网 IP 下的其他访客也将获得全部文章的免密访问权限。</p>
+  <% if @allowlist_error %><div class="notice danger" role="alert"><%= e(@allowlist_error) %></div><% end %>
+  <form method="post" action="/admin/allowlist#ip-allowlist" class="allowlist-form">
+    <%= csrf_field %><input type="hidden" name="action" value="add">
+    <div class="field"><label for="allowlist-ip">IP 地址</label><input id="allowlist-ip" name="ip" value="<%= e(@allowlist_form['ip']) %>" placeholder="IPv4 / IPv6" maxlength="45" autocomplete="off" autocapitalize="none" spellcheck="false" required></div>
+    <div class="field"><label for="allowlist-note">备注（选填）</label><input id="allowlist-note" name="note" value="<%= e(@allowlist_form['note']) %>" maxlength="120" autocomplete="off"></div>
+    <button class="button primary" type="submit"><%= icon('check') %>加入白名单</button>
+  </form>
+  <table class="data-table allowlist-table">
+    <thead><tr><th scope="col">IP 地址</th><th scope="col">备注</th><th scope="col">添加时间</th><th scope="col" class="actions-cell">操作</th></tr></thead>
+    <tbody>
+    <% @allowed_ips.each do |entry| %>
+      <tr><td data-label="IP 地址"><span class="mono ip-address"><%= e(entry['ip']) %></span></td><td data-label="备注"><span><%= e(entry['note'].empty? ? '无' : entry['note']) %></span></td><td data-label="添加时间"><time datetime="<%= Time.at(entry['created_at']).utc.iso8601 %>"><%= Time.at(entry['created_at']).getlocal(ActivityStore::TIME_OFFSET).strftime('%Y-%m-%d %H:%M') %></time></td><td data-label="操作" class="actions-cell"><form method="post" action="/admin/allowlist#ip-allowlist" class="row-actions"><%= csrf_field %><input type="hidden" name="ip" value="<%= e(entry['ip']) %>"><input type="hidden" name="action" value="remove"><button class="icon-button danger-text" type="submit" title="移出白名单" aria-label="移除 <%= e(entry['ip']) %>" data-confirm="确定将这个 IP 移出白名单？仅凭白名单免密的访客将需要文章密码。"><%= icon('trash-2') %></button></form></td></tr>
+    <% end %>
+    <% if @allowed_ips.empty? %><tr><td colspan="4" class="empty">暂无白名单 IP</td></tr><% end %>
+    </tbody>
+  </table>
+</section>

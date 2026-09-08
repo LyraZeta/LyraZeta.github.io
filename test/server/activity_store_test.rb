@@ -77,6 +77,53 @@ class ActivityStoreTest < Minitest::Test
     assert_equal 100, @store.visits[:total]
   end
 
+  def test_allowlist_normalizes_exact_addresses_and_persists_independently_of_logs
+    assert_empty @store.allowed_ips
+    assert_equal "203.0.113.5", @store.add_allowed_ip(ip: " ::ffff:203.0.113.5 ", note: " Laptop ")
+    @store.add_allowed_ip(ip: "2001:0db8:0000:0000:0000:0000:0000:0001", note: "IPv6")
+    assert @store.allowed_ip?("203.0.113.5")
+    assert @store.allowed_ip?("::ffff:203.0.113.5")
+    assert @store.allowed_ip?("2001:db8::1")
+    refute @store.allowed_ip?("203.0.113.50")
+    refute @store.allowed_ip?(nil)
+    assert_raises(ArgumentError) { @store.add_allowed_ip(ip: "203.0.113.5", note: "overwrite") }
+    assert_equal "Laptop", @store.allowed_ips.find { |entry| entry["ip"] == "203.0.113.5" }["note"]
+    visit
+    @store.update_settings(enabled: false, retention_days: 1)
+    @time += 86_401
+    @store.visits
+    @store.clear_visits
+    @store.close
+    @store = LyraSite::ActivityStore.new(path: @path, clock: -> { @time })
+    assert_equal 2, @store.allowed_ips.length
+    assert @store.allowed_ip?("203.0.113.5")
+    assert_equal "2001:db8::1", @store.remove_allowed_ip("2001:0db8::1")
+    refute @store.allowed_ip?("2001:db8::1")
+    assert_raises(ArgumentError) { @store.remove_allowed_ip("2001:db8::1") }
+  end
 
+  def test_allowlist_rejects_ranges_wildcards_hostnames_and_invalid_values
+    [nil, "", "*", "203.0.113.1/32", "0.0.0.0/0", "::/0", "2001:db8::1%eth0", "[::1]", "localhost",
+     "203.0.113.5:80", "203.0.113.1,203.0.113.2", "1.2.3", "256.1.1.1", "203.0.113.5\u0000", "' OR 1=1 --", "1" * 100].each do |ip|
+      assert_raises(ArgumentError, ip.inspect) { @store.add_allowed_ip(ip: ip) }
+      refute @store.allowed_ip?(ip), ip.inspect
+    end
+    ["x" * 121, "note\nwith newline", "note\u0000"].each do |note|
+      assert_raises(ArgumentError) { @store.add_allowed_ip(ip: "203.0.113.5", note: note) }
+    end
+    assert_empty @store.allowed_ips
+  end
 
+  def test_allowlist_migration_preserves_existing_activity_data
+    visit
+    @store.update_settings(enabled: false, retention_days: 14)
+    @store.close
+    db = SQLite3::Database.new(@path)
+    db.execute("DROP TABLE ip_allowlist")
+    db.close
+    @store = LyraSite::ActivityStore.new(path: @path, clock: -> { @time })
+    assert_empty @store.allowed_ips
+    assert_equal 1, @store.visits[:total]
+    assert_equal({ "enabled" => "0", "retention_days" => "14" }, @store.settings)
+  end
 end

@@ -39,6 +39,9 @@ class ProtectionStoreTest < Minitest::Test
     )
 
     assert @store.protected?("/2026/01/%E5%8E%86%E5%B9%B4%E8%80%83%E9%A2%98/index.html")
+    assert @store.protected?("/2026/01/历年考题/index.html")
+    assert @store.protected?("/2026/01/历年考题")
+    assert @store.protected?("https://example.test/2026/01/历年考题/index.html?from=link#chapter")
   end
 
   def test_canonicalizes_ascii_8bit_utf8_bytes

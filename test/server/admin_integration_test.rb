@@ -34,8 +34,8 @@ class AdminIntegrationTest < Minitest::Test
     FileUtils.remove_entry(@dir)
   end
 
-  def request(path, form: nil, headers: {}, cookies: @cookies)
-    req = form ? Net::HTTP::Post.new(path) : Net::HTTP::Get.new(path)
+  def request(path, form: nil, headers: {}, cookies: @cookies, head: false)
+    req = form ? Net::HTTP::Post.new(path) : (head ? Net::HTTP::Head.new(path) : Net::HTTP::Get.new(path))
     req.set_form_data(form) if form
     req["Cookie"] = cookies.map { |key, value| "#{key}=#{value}" }.join("; ")
     headers.each { |key, value| req[key] = value }
@@ -151,9 +151,100 @@ class AdminIntegrationTest < Minitest::Test
     assert_includes request("/admin/audit").body, "清空访问日志"
   end
 
+  def test_allowlist_management_requires_admin_and_csrf_and_escapes_notes
+    form = { action: "add", ip: "203.0.113.5", note: '<script>alert("note")</script>' }
+    assert_equal "303", request("/admin/allowlist", form: form, cookies: {}).code
+    token = login
+    assert_equal "403", request("/admin/allowlist", form: form).code
+    assert_equal 0, database { |db| db.get_first_value("SELECT COUNT(*) FROM ip_allowlist") }
+    res = request("/admin/allowlist", form: form.merge(csrf_token: token))
+    assert_equal "303", res.code
+    assert_equal "/admin/settings", URI.parse(res["Location"]).path
+    assert_equal "ip-allowlist", URI.parse(res["Location"]).fragment
+    settings = request("/admin/settings")
+    doc = Nokogiri::HTML(settings.body)
+    assert_equal 1, doc.css(".allowlist-table .ip-address").length
+    assert_includes doc.at_css(".allowlist-table").text, form[:note]
+    assert_empty doc.css(".allowlist-table script")
+    duplicate = request("/admin/allowlist", form: form.merge(csrf_token: token, ip: "::ffff:203.0.113.5"))
+    assert_equal "422", duplicate.code
+    assert_includes duplicate.body, "该 IP 已在白名单中。"
+    assert_equal token, csrf(duplicate)
+    invalid = request("/admin/allowlist", form: form.merge(csrf_token: token, ip: "0.0.0.0/0"))
+    assert_equal "422", invalid.code
+    assert_includes invalid.body, "不支持网段"
+    assert_equal 1, database { |db| db.get_first_value("SELECT COUNT(*) FROM ip_allowlist") }
+    assert_equal "403", request("/admin/allowlist", form: { action: "remove", ip: form[:ip] }).code
+    assert_equal "303", request("/admin/allowlist", form: { csrf_token: token, action: "remove", ip: form[:ip] }).code
+    assert_equal 0, database { |db| db.get_first_value("SELECT COUNT(*) FROM ip_allowlist") }
+    actions = database { |db| db.execute("SELECT action, target FROM audit_events WHERE action LIKE 'allowlist_%' ORDER BY id") }
+    assert_equal [["allowlist_add", "203.0.113.5"], ["allowlist_remove", "203.0.113.5"]], actions
+    assert_includes request("/admin/audit").body, "添加白名单 IP"
+    assert_includes request("/admin/audit").body, "移除白名单 IP"
+  end
+
+  def test_allowlisted_visitors_read_all_articles_without_cookies_and_revocation_is_immediate
+    write_tagged_post("中文文章", title: "中文文章", tags: ["Test"])
+    FileUtils.mkdir_p(File.join(@dir, "_site/2026/09/中文文章"))
+    File.write(File.join(@dir, "_site/2026/09/中文文章/index.html"), "<h1>PRIVATE CHINESE CONTENT</h1>")
+    token = login
+    urls = ["/2026/09/test/", "/2026/09/中文文章/"]
+    urls.each do |url|
+      assert_equal "303", request("/admin/protections", form: { csrf_token: token, action: "protect", url: url, password: "password" }).code
+    end
+    headers = { "X-Forwarded-For" => "203.0.113.5" }
+    refute_includes request(urls.first, headers: headers, cookies: {}).body, "PRIVATE"
+    assert_equal "303", request("/admin/allowlist", form: { csrf_token: token, action: "add", ip: "203.0.113.5" }).code
+    visitor = {}
+    urls.each do |url|
+      encoded = URI::DEFAULT_PARSER.escape(url)
+      [encoded, "#{encoded}index.html"].each do |path|
+        res = request(path, headers: headers, cookies: visitor)
+        assert_equal "200", res.code, @log.string
+        assert_includes res.body, "PRIVATE"
+        assert_nil res["Set-Cookie"]
+        assert_includes res["Cache-Control"], "no-store"
+        refute_includes request(path, cookies: {}).body, "PRIVATE"
+      end
+    end
+    partial = request(urls.first, headers: headers.merge("Range" => "bytes=0-20"), cookies: visitor)
+    assert_equal "206", partial.code
+    assert_includes partial["Cache-Control"], "no-store"
+    head = request(urls.first, headers: headers, cookies: visitor, head: true)
+    assert_equal "200", head.code
+    assert_includes head["Cache-Control"], "no-store"
+    unlocked = request("/unlock", form: { url: urls.last, password: "" }, headers: headers, cookies: visitor)
+    assert_equal "303", unlocked.code
+    assert_nil unlocked["Set-Cookie"]
+    assert_includes request(URI.parse(unlocked["Location"]).request_uri, headers: headers, cookies: visitor).body, "PRIVATE"
+    assert_empty visitor
+    assert_equal "303", request("/admin", headers: headers, cookies: visitor).code
+    refute_includes request("/feed.xml", headers: headers, cookies: visitor).body, "PRIVATE"
+    assert JSON.parse(request("/api/posts", headers: headers, cookies: visitor).body)["posts"].all? { |post| post["protected"] && post["excerpt"].nil? }
+    assert_equal "303", request("/admin/allowlist", form: { csrf_token: token, action: "remove", ip: "203.0.113.5" }).code
+    denied = request(urls.first, headers: headers.merge("Range" => "bytes=0-20", "If-Modified-Since" => Time.now.httpdate), cookies: visitor)
+    assert_equal "200", denied.code
+    refute_includes denied.body, "PRIVATE"
+    assert_includes denied.body, "访问密码"
+    assert_nil request("/unlock", form: { url: urls.last, password: "" }, headers: headers, cookies: visitor)["Location"]
+  end
 
 
-
+  def test_allowlist_uses_trusted_client_identity_not_spoofed_headers_or_proxy_fallback
+    token = login
+    request("/admin/protections", form: { csrf_token: token, action: "protect", url: "/2026/09/test/", password: "password" })
+    %w[203.0.113.5 2001:db8::1 127.0.0.1].each do |ip|
+      request("/admin/allowlist", form: { csrf_token: token, action: "add", ip: ip })
+    end
+    [nil, "203.0.113.5, 203.0.113.6", "bad, 203.0.113.5", "203.0.113.5,", "127.0.0.1"].each do |forwarded|
+      headers = { "Client-IP" => "203.0.113.5", "X-Real-IP" => "203.0.113.5" }
+      headers["X-Forwarded-For"] = forwarded if forwarded
+      refute_includes request("/2026/09/test/", headers: headers, cookies: {}).body, "PRIVATE CONTENT"
+    end
+    %w[::ffff:203.0.113.5 2001:0db8:0000:0000:0000:0000:0000:0001].each do |forwarded|
+      assert_includes request("/2026/09/test/", headers: { "X-Forwarded-For" => forwarded }, cookies: {}).body, "PRIVATE CONTENT"
+    end
+  end
 
   def test_unlock_redirects_to_chinese_articles_without_a_second_visit
     articles = [
